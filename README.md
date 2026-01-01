@@ -1,73 +1,158 @@
-# Welcome to your Lovable project
+# Bujit - Stupidly Simple Budgeting
 
-## Project info
+> Track expenses like taking notes. Just type and go.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🎯 The Problem
 
-## How can I edit this code?
+Most budgeting apps are overwhelming:
+- Too many fields to fill
+- Steep learning curves
+- Friction that kills the habit
+- Visual clutter everywhere
 
-There are several ways of editing your application.
+**Result:** People give up within a week.
 
-**Use Lovable**
+## 💡 The Solution
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+**Bujit** makes expense tracking as simple as taking notes:
 
-Changes made via Lovable will be committed automatically to this repo.
+```
+Coffee CC 150
+```
 
-**Use your preferred IDE**
+That's it. Type what you spent, how you paid, and the amount. Done in 3 seconds.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 👥 Who It's For
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **First-time budgeters** who find finance apps intimidating
+- **Busy professionals** who need to log expenses on the go
+- **Students** tracking limited budgets
+- **Anyone who's quit other budgeting apps** because they were too complex
 
-Follow these steps:
+## ✨ Features
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+### Zero-Friction Entry
+- **Natural language input**: Type `Grocery CC 9500` instead of filling forms
+- **Smart auto-complete**: Suggestions based on your history as you type
+- **Amount presets**: Quick-tap your most common amounts
+- **Voice input**: Speak your expenses hands-free
+- **Swipe-to-backdate**: Swipe the date pill to quickly log yesterday's expenses
+
+### One-Tap Everything
+- **Long-press to repeat**: Hold the submit button to repeat your last transaction
+- **Double-tap to duplicate**: Double-tap any transaction to copy it for today
+- **Quick-add pills**: Your frequent expenses, one tap away
+- **Tap to categorize**: Single tap to toggle Need/Want classification
+
+### Smart Learning
+- **Auto-learn necessity**: Bujit remembers how you categorize items
+- **Pattern recognition**: Suggests categories based on your 70%+ usage patterns
+- **Frequency-based presets**: Amount buttons adapt to your spending habits
+
+### Visual Delight
+- **"Today: X transactions" counter**: Always know your daily activity
+- **Animated empty state**: Helpful tips that rotate to guide new users
+- **Smooth animations**: Every interaction feels polished
+- **Beautiful dark/light modes**: Easy on the eyes, day or night
+
+### Powerful Dashboard
+- **Monthly overview**: Track expenses, income, needs vs wants
+- **Category breakdown**: See where your money goes
+- **AI-powered insights**: Chat with Gemini about your spending habits
+
+## 🛠 Tech Stack
+
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Lightning-fast builds
+- **Tailwind CSS** - Utility-first styling
+- **shadcn/ui** - Beautiful, accessible components
+- **Recharts** - Data visualization
+- **PWA** - Install as a native-like app
+
+## 📱 Progressive Web App
+
+Bujit is a PWA, meaning you can:
+- Install it on your home screen
+- Use it offline
+- Get native app-like experience
+- No app store required
+
+## 🚀 Getting Started
+
+```bash
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to project
+cd bujit
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 📝 Input Format
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The natural language parser accepts flexible input:
 
-**Use GitHub Codespaces**
+```
+[reason] [payment mode] [amount]
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+**Examples:**
+- `Coffee CC 150` - Coffee paid by Credit Card, Rs.150
+- `Lunch Cash 500` - Lunch paid by Cash, Rs.500
+- `Uber EP 350` - Uber paid by EasyPaisa, Rs.350
 
-## What technologies are used for this project?
+**Default payment modes:**
+| Shorthand | Full Name |
+|-----------|-----------|
+| C | Cash |
+| CC | Credit Card |
+| D | Debit |
+| JC | JazzCash |
+| EP | EasyPaisa |
 
-This project is built with:
+You can add custom payment modes in Settings.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🎨 Design Philosophy
 
-## How can I deploy this project?
+- **Minimal clicks**: Every action should take 1-2 taps maximum
+- **Progressive disclosure**: Advanced features hidden until needed
+- **Mobile-first**: Designed for on-the-go use
+- **Instant feedback**: Every action shows immediate visual response
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## ⌨️ Keyboard Shortcuts (Desktop)
 
-## Can I connect a custom domain to my Lovable project?
+- `Enter` - Submit transaction
+- `Escape` - Close dialogs / clear input
 
-Yes, you can!
+## 🔒 Privacy
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+All data is stored locally in your browser's localStorage. Nothing is sent to any server (except AI chat if you configure a Gemini API key).
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 📊 Need/Want Categorization
+
+Bujit helps you understand your spending habits with simple categorization:
+
+- **Need** 🔵 - Essential expenses (groceries, rent, utilities)
+- **Want** 🟡 - Non-essential expenses (entertainment, dining out)
+- **Uncategorized** - Tap the dot to categorize anytime
+
+## 🤖 AI Insights (Optional)
+
+Connect your Gemini API key in Settings to:
+- Ask questions about your spending
+- Get personalized budgeting advice
+- Analyze spending patterns
+
+## 📄 License
+
+MIT License - feel free to use and modify.
+
+---
+
+**Bujit** - Because budgets don't have to be boring. 💚

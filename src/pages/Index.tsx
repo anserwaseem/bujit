@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useBudgly } from '@/hooks/useBudgly';
 import { Header } from '@/components/Header';
 import { StatsBar } from '@/components/StatsBar';
@@ -11,6 +11,7 @@ import { AIChatDialog } from '@/components/AIChatDialog';
 import { Transaction, PaymentMode } from '@/lib/types';
 import { BarChart3, List, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 const Index = () => {
   const {
@@ -34,6 +35,31 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+
+  // Today's transaction count
+  const todayCount = useMemo(() => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    return transactions.filter(t => format(new Date(t.date), 'yyyy-MM-dd') === today).length;
+  }, [transactions]);
+
+  // Last transaction for repeat feature
+  const lastTransaction = useMemo(() => {
+    return transactions.length > 0 ? transactions[0] : null;
+  }, [transactions]);
+
+  // Repeat last transaction
+  const handleRepeatLast = useCallback(() => {
+    if (lastTransaction) {
+      addTransaction({
+        date: new Date().toISOString(),
+        reason: lastTransaction.reason,
+        amount: lastTransaction.amount,
+        paymentMode: lastTransaction.paymentMode,
+        type: lastTransaction.type,
+        necessity: lastTransaction.necessity,
+      });
+    }
+  }, [lastTransaction, addTransaction]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,7 +109,11 @@ const Index = () => {
                 paymentModes={paymentModes} 
                 currencySymbol={settings.currencySymbol}
                 quickAddSuggestions={quickAddSuggestions}
-                onAdd={addTransaction} 
+                transactions={transactions}
+                todayCount={todayCount}
+                onAdd={addTransaction}
+                onRepeatLast={handleRepeatLast}
+                lastTransaction={lastTransaction}
               />
             </section>
 
@@ -94,6 +124,14 @@ const Index = () => {
                 onDelete={deleteTransaction}
                 onEdit={setEditingTransaction}
                 onUpdateNecessity={updateNecessity}
+                onDuplicate={(t) => addTransaction({
+                  date: new Date().toISOString(),
+                  reason: t.reason,
+                  amount: t.amount,
+                  paymentMode: t.paymentMode,
+                  type: t.type,
+                  necessity: t.necessity,
+                })}
               />
             </section>
           </>
