@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Plus, Trash2, Eye, EyeOff, RefreshCw, Download, Upload, FileText } from 'lucide-react';
+import { X, Plus, Trash2, Eye, EyeOff, RefreshCw, Download, Upload, FileText, Pencil, Check } from 'lucide-react';
 import { AppSettings, PaymentMode, Transaction } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { checkForUpdates, forceRefresh } from '@/lib/pwa';
@@ -40,6 +40,9 @@ export function SettingsDialog({
   const [localModes, setLocalModes] = useState(paymentModes);
   const [newModeName, setNewModeName] = useState('');
   const [newModeShort, setNewModeShort] = useState('');
+  const [editingModeId, setEditingModeId] = useState<string | null>(null);
+  const [editModeName, setEditModeName] = useState('');
+  const [editModeShort, setEditModeShort] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'payments' | 'data' | 'ai'>('general');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -59,6 +62,30 @@ export function SettingsDialog({
 
   const handleDeleteMode = (id: string) => {
     setLocalModes(localModes.filter((m) => m.id !== id));
+  };
+
+  const handleEditMode = (mode: PaymentMode) => {
+    setEditingModeId(mode.id);
+    setEditModeName(mode.name);
+    setEditModeShort(mode.shorthand);
+  };
+
+  const handleSaveEditMode = () => {
+    if (!editModeName.trim() || !editModeShort.trim() || !editingModeId) return;
+    setLocalModes(localModes.map(m => 
+      m.id === editingModeId 
+        ? { ...m, name: editModeName.trim(), shorthand: editModeShort.trim().toUpperCase() }
+        : m
+    ));
+    setEditingModeId(null);
+    setEditModeName('');
+    setEditModeShort('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingModeId(null);
+    setEditModeName('');
+    setEditModeShort('');
   };
 
   const handleSave = () => {
@@ -128,12 +155,14 @@ export function SettingsDialog({
       const content = event.target?.result as string;
       const { transactions: parsed, errors, newPaymentModes } = parseCSVToTransactions(content, localModes);
 
+      // If there are ANY errors, reject the entire import
       if (errors.length > 0) {
         toast({
-          title: "Import Errors",
-          description: errors.slice(0, 3).join('\n') + (errors.length > 3 ? `\n...and ${errors.length - 3} more` : ''),
-          variant: parsed.length === 0 ? "destructive" : "default",
+          title: "Import Failed",
+          description: errors.slice(0, 5).join('\n') + (errors.length > 5 ? `\n...and ${errors.length - 5} more errors` : ''),
+          variant: "destructive",
         });
+        return; // Don't import anything
       }
 
       if (parsed.length > 0) {
@@ -147,6 +176,12 @@ export function SettingsDialog({
           title: "Import Successful",
           description: `${parsed.length} transactions imported.` + 
             (newPaymentModes.length > 0 ? ` ${newPaymentModes.length} new payment mode(s) added.` : ''),
+        });
+      } else {
+        toast({
+          title: "No Data",
+          description: "The file contains no valid transactions.",
+          variant: "destructive",
         });
       }
     };
@@ -280,19 +315,70 @@ export function SettingsDialog({
                     key={mode.id}
                     className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-xs bg-primary/20 text-primary px-2 py-1 rounded">
-                        {mode.shorthand}
-                      </span>
-                      <span className="font-medium">{mode.name}</span>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteMode(mode.id)}
-                      className="p-1.5 rounded-md text-muted-foreground hover:text-destructive 
-                                 hover:bg-destructive/10 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {editingModeId === mode.id ? (
+                      <>
+                        <div className="flex items-center gap-2 flex-1">
+                          <input
+                            type="text"
+                            value={editModeName}
+                            onChange={(e) => setEditModeName(e.target.value)}
+                            placeholder="Name"
+                            className="flex-1 bg-input border border-border rounded-lg px-2 py-1 text-sm
+                                       focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                          />
+                          <input
+                            type="text"
+                            value={editModeShort}
+                            onChange={(e) => setEditModeShort(e.target.value)}
+                            placeholder="Code"
+                            className="w-16 bg-input border border-border rounded-lg px-2 py-1 text-sm uppercase
+                                       focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                            maxLength={4}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1 ml-2">
+                          <button
+                            onClick={handleSaveEditMode}
+                            disabled={!editModeName.trim() || !editModeShort.trim()}
+                            className="p-1.5 rounded-md text-primary hover:bg-primary/10 transition-colors"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground 
+                                       hover:bg-muted transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-xs bg-primary/20 text-primary px-2 py-1 rounded">
+                            {mode.shorthand}
+                          </span>
+                          <span className="font-medium">{mode.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleEditMode(mode)}
+                            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground 
+                                       hover:bg-muted transition-colors"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMode(mode.id)}
+                            className="p-1.5 rounded-md text-muted-foreground hover:text-destructive 
+                                       hover:bg-destructive/10 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
