@@ -263,8 +263,10 @@ export function TransactionInput({
           </PopoverContent>
         </Popover>
 
-        {/* Compact Type Toggle */}
-        <div className="flex rounded-full bg-muted p-0.5">
+        <span className="text-xs text-muted-foreground">swipe →</span>
+
+        {/* Compact Type Toggle - pushed to right */}
+        <div className="flex rounded-full bg-muted p-0.5 ml-auto">
           <button
             onClick={() => setIsIncome(false)}
             className={cn(
@@ -290,8 +292,6 @@ export function TransactionInput({
             Inc
           </button>
         </div>
-        
-        <span className="text-xs text-muted-foreground ml-auto">swipe date →</span>
       </div>
 
       {/* Main Input with Auto-Complete */}
@@ -453,8 +453,8 @@ export function TransactionInput({
         </div>
       )}
 
-      {/* Helper Text */}
-      <p className="text-xs text-muted-foreground text-center">
+      {/* Helper Text - no border */}
+      <p className="text-xs text-muted-foreground text-center pt-0">
         Type: <span className="font-mono text-foreground/70">reason</span> <span className="font-mono text-foreground/70">mode</span> <span className="font-mono text-foreground/70">amount</span>
         {isSupported && <span className="ml-2">• or tap mic to speak</span>}
       </p>
