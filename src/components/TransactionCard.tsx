@@ -44,17 +44,19 @@ export function TransactionCard({
     >
       <div className="group flex items-center gap-3 p-3 rounded-lg bg-card/50 hover:bg-card 
                       border border-transparent hover:border-border transition-all animate-slide-up">
-        {/* Necessity Indicator */}
-        <button
-          onClick={() => handleNecessityClick(transaction.necessity === 'need' ? 'want' : 'need')}
-          className={cn(
-            "w-2.5 h-2.5 rounded-full shrink-0 transition-all hover:scale-125",
-            transaction.necessity === 'need' && "bg-need shadow-[0_0_8px_hsl(var(--need)/0.5)]",
-            transaction.necessity === 'want' && "bg-want shadow-[0_0_8px_hsl(var(--want)/0.5)]",
-            !transaction.necessity && "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-          )}
-          title={transaction.necessity || 'Click to categorize'}
-        />
+        {/* Necessity Indicator - Only show for expenses */}
+        {transaction.type === 'expense' && (
+          <button
+            onClick={() => handleNecessityClick(transaction.necessity === 'need' ? 'want' : 'need')}
+            className={cn(
+              "w-2.5 h-2.5 rounded-full shrink-0 transition-all hover:scale-125",
+              transaction.necessity === 'need' && "bg-need shadow-[0_0_8px_hsl(var(--need)/0.5)]",
+              transaction.necessity === 'want' && "bg-want shadow-[0_0_8px_hsl(var(--want)/0.5)]",
+              !transaction.necessity && "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+            )}
+            title={transaction.necessity || 'Click to categorize'}
+          />
+        )}
 
         {/* Content */}
         <div className="flex-1 min-w-0">
