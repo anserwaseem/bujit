@@ -130,10 +130,10 @@ export function parseCSVToTransactions(
         continue;
       }
 
-      // Validate type - must be expense, income, or savings
-      const trimmedType = type.trim().toLowerCase();
-      if (!['expense', 'income', 'savings'].includes(trimmedType)) {
-        errors.push(`Row ${i + 1}: Invalid type "${type}". Must be 'expense', 'income', or 'savings'`);
+      // Validate type - must be expense or income only
+      const trimmedType = type ? type.trim().toLowerCase() : '';
+      if (!['expense', 'income'].includes(trimmedType)) {
+        errors.push(`Row ${i + 1}: Invalid type "${type.trim()}". Must be 'expense' or 'income'`);
         continue;
       }
 
@@ -158,7 +158,7 @@ export function parseCSVToTransactions(
         }
       }
 
-      // Validate necessity - only for expenses, ignore for income/savings
+      // Validate necessity - only for expenses, ignore for income
       let validNecessity: 'need' | 'want' | null = null;
       if (trimmedType === 'expense') {
         const trimmedNecessity = (necessity || '').trim().toLowerCase();
@@ -168,14 +168,14 @@ export function parseCSVToTransactions(
         }
         validNecessity = trimmedNecessity ? (trimmedNecessity as 'need' | 'want') : null;
       }
-      // For income/savings, necessity is ignored (stays null)
+      // For income, necessity is ignored (stays null)
 
       transactions.push({
         date: dateObj.toISOString(),
         reason: trimmedReason,
         amount,
         paymentMode: finalPaymentMode,
-        type: trimmedType as 'expense' | 'income' | 'savings',
+        type: trimmedType as 'expense' | 'income',
         necessity: validNecessity,
       });
     } catch (err) {
