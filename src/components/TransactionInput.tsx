@@ -1,11 +1,13 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Plus, Check, Minus, CalendarIcon } from 'lucide-react';
+import { Plus, Check, Minus, CalendarIcon, Mic, MicOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { parseInput } from '@/lib/parser';
 import { PaymentMode, Transaction, NecessityType } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { cn, haptic } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
+import { toast } from '@/hooks/use-toast';
 
 interface TransactionInputProps {
   paymentModes: PaymentMode[];
@@ -21,7 +23,25 @@ export function TransactionInput({ paymentModes, currencySymbol, quickAddSuggest
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
 
+  const { isListening, isSupported, toggleListening } = useSpeechRecognition({
+    onResult: (transcript) => {
+      setInput(transcript);
+      toast({
+        title: "Voice captured",
+        description: transcript,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Voice input failed",
+        description: error === 'not-allowed' ? 'Please enable microphone access' : 'Try again',
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleQuickAdd = (suggestion: Transaction) => {
+    haptic('light');
     setInput(`${suggestion.reason} ${suggestion.paymentMode} ${suggestion.amount}`);
     setSelectedNecessity(suggestion.necessity);
     setIsIncome(false);
@@ -32,6 +52,7 @@ export function TransactionInput({ paymentModes, currencySymbol, quickAddSuggest
   const handleSubmit = useCallback(() => {
     if (!parsed.isValid || !parsed.amount) return;
 
+    haptic('success');
     onAdd({
       date: selectedDate.toISOString(),
       reason: parsed.reason,
@@ -134,8 +155,25 @@ export function TransactionInput({ paymentModes, currencySymbol, quickAddSuggest
           placeholder="Grocery CC 9500"
           className="w-full bg-card border border-border rounded-xl px-4 py-3.5 text-lg font-mono 
                      placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 
-                     focus:ring-primary/30 focus:border-primary transition-all pr-14"
+                     focus:ring-primary/30 focus:border-primary transition-all pr-24"
         />
+        
+        {/* Voice Input Button */}
+        {isSupported && (
+          <button
+            onClick={toggleListening}
+            className={cn(
+              "absolute right-14 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all",
+              isListening
+                ? "bg-destructive text-destructive-foreground animate-pulse"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            )}
+            title={isListening ? "Stop listening" : "Voice input"}
+          >
+            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
+        )}
+
         <button
           onClick={handleSubmit}
           disabled={!parsed.isValid}
@@ -229,6 +267,7 @@ export function TransactionInput({ paymentModes, currencySymbol, quickAddSuggest
       {/* Helper Text */}
       <p className="text-xs text-muted-foreground text-center">
         Type: <span className="font-mono text-foreground/70">reason</span> <span className="font-mono text-foreground/70">mode</span> <span className="font-mono text-foreground/70">amount</span>
+        {isSupported && <span className="ml-2">• or tap mic to speak</span>}
       </p>
     </div>
   );
