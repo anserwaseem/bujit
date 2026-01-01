@@ -84,22 +84,28 @@ export function useBudgeter() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const monthlyTransactions = transactions.filter(
-      t => new Date(t.date) >= startOfMonth && t.type === 'expense'
+      t => new Date(t.date) >= startOfMonth
     );
 
-    const totalExpenses = monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = monthlyTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = monthlyTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
     const needsTotal = monthlyTransactions
-      .filter(t => t.necessity === 'need')
+      .filter(t => t.type === 'expense' && t.necessity === 'need')
       .reduce((sum, t) => sum + t.amount, 0);
     const wantsTotal = monthlyTransactions
-      .filter(t => t.necessity === 'want')
+      .filter(t => t.type === 'expense' && t.necessity === 'want')
       .reduce((sum, t) => sum + t.amount, 0);
     const uncategorized = monthlyTransactions
-      .filter(t => t.necessity === null)
+      .filter(t => t.type === 'expense' && t.necessity === null)
       .reduce((sum, t) => sum + t.amount, 0);
 
     return {
       totalExpenses,
+      totalIncome,
       needsTotal,
       wantsTotal,
       uncategorized,

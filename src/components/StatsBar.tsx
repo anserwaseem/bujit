@@ -4,14 +4,16 @@ import { cn } from '@/lib/utils';
 interface StatsBarProps {
   stats: {
     totalExpenses: number;
+    totalIncome: number;
     needsTotal: number;
     wantsTotal: number;
     uncategorized: number;
     transactionCount: number;
   };
+  currencySymbol: string;
 }
 
-export function StatsBar({ stats }: StatsBarProps) {
+export function StatsBar({ stats, currencySymbol }: StatsBarProps) {
   const needsPercent = stats.totalExpenses > 0 
     ? (stats.needsTotal / stats.totalExpenses) * 100 
     : 0;
@@ -19,16 +21,25 @@ export function StatsBar({ stats }: StatsBarProps) {
     ? (stats.wantsTotal / stats.totalExpenses) * 100 
     : 0;
 
+  const balance = stats.totalIncome - stats.totalExpenses;
+
   return (
     <div className="space-y-4">
-      {/* Total */}
+      {/* Balance */}
       <div className="text-center">
         <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
           This Month
         </p>
-        <p className="text-3xl font-bold text-foreground font-mono">
-          ₹{formatAmount(stats.totalExpenses)}
+        <p className={cn(
+          "text-3xl font-bold font-mono",
+          balance >= 0 ? "text-income" : "text-expense"
+        )}>
+          {balance >= 0 ? '+' : ''}{currencySymbol}{formatAmount(Math.abs(balance))}
         </p>
+        <div className="flex justify-center gap-4 mt-2 text-xs">
+          <span className="text-income">+{currencySymbol}{formatAmount(stats.totalIncome)}</span>
+          <span className="text-expense">-{currencySymbol}{formatAmount(stats.totalExpenses)}</span>
+        </div>
         <p className="text-xs text-muted-foreground mt-1">
           {stats.transactionCount} transactions
         </p>
@@ -55,20 +66,20 @@ export function StatsBar({ stats }: StatsBarProps) {
                 <span className="w-2 h-2 rounded-full bg-need" />
                 <span className="text-muted-foreground">Needs</span>
                 <span className={cn("font-mono font-medium", stats.needsTotal > 0 && "text-need")}>
-                  ₹{formatAmount(stats.needsTotal)}
+                  {currencySymbol}{formatAmount(stats.needsTotal)}
                 </span>
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-want" />
                 <span className="text-muted-foreground">Wants</span>
                 <span className={cn("font-mono font-medium", stats.wantsTotal > 0 && "text-want")}>
-                  ₹{formatAmount(stats.wantsTotal)}
+                  {currencySymbol}{formatAmount(stats.wantsTotal)}
                 </span>
               </span>
             </div>
             {stats.uncategorized > 0 && (
               <span className="text-muted-foreground">
-                ₹{formatAmount(stats.uncategorized)} uncategorized
+                {currencySymbol}{formatAmount(stats.uncategorized)} uncategorized
               </span>
             )}
           </div>

@@ -1,31 +1,41 @@
-import { Sun, Moon, Wallet } from 'lucide-react';
+import { Sun, Moon, Wallet, Settings } from 'lucide-react';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  onOpenSettings: () => void;
 }
 
-export function Header({ theme, onToggleTheme }: HeaderProps) {
+export function Header({ theme, onToggleTheme, onOpenSettings }: HeaderProps) {
   return (
     <header className="flex items-center justify-between py-4">
       <div className="flex items-center gap-2">
         <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
           <Wallet className="w-5 h-5 text-primary-foreground" />
         </div>
-        <span className="text-xl font-semibold text-foreground">Budgeter</span>
+        <span className="text-xl font-semibold text-foreground">Budgly</span>
       </div>
 
-      <button
-        onClick={onToggleTheme}
-        className="p-2 rounded-lg bg-card hover:bg-muted transition-colors"
-        aria-label="Toggle theme"
-      >
-        {theme === 'dark' ? (
-          <Sun className="w-5 h-5 text-foreground" />
-        ) : (
-          <Moon className="w-5 h-5 text-foreground" />
-        )}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onOpenSettings}
+          className="p-2 rounded-lg bg-card hover:bg-muted transition-colors"
+          aria-label="Settings"
+        >
+          <Settings className="w-5 h-5 text-foreground" />
+        </button>
+        <button
+          onClick={onToggleTheme}
+          className="p-2 rounded-lg bg-card hover:bg-muted transition-colors"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-5 h-5 text-foreground" />
+          ) : (
+            <Moon className="w-5 h-5 text-foreground" />
+          )}
+        </button>
+      </div>
     </header>
   );
 }
