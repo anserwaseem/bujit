@@ -1,4 +1,5 @@
 // PWA utilities for managing service worker updates
+// Following best practices from https://web.dev/articles/service-worker-lifecycle
 
 let swRegistration: ServiceWorkerRegistration | null = null;
 
@@ -12,7 +13,6 @@ export function getServiceWorkerRegistration(): ServiceWorkerRegistration | null
 
 export async function checkForUpdates(): Promise<boolean> {
   if (!swRegistration) {
-    // Try to get the registration
     if ('serviceWorker' in navigator) {
       try {
         swRegistration = await navigator.serviceWorker.getRegistration();
@@ -38,19 +38,68 @@ export function applyUpdate(): void {
     swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
     window.location.reload();
   } else {
-    // Force reload to get fresh content
     window.location.reload();
   }
 }
 
-export async function forceRefresh(): Promise<void> {
-  // Clear all caches
+/**
+ * Safe update mechanism that preserves localStorage data.
+ * Uses proper service worker lifecycle: SKIP_WAITING + controllerchange event.
+ */
+export async function safeUpdate(): Promise<void> {
+  // Set up controller change listener BEFORE triggering update
+  let reloadScheduled = false;
+  
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // Only reload once after we've triggered the update
+      if (reloadScheduled) {
+        window.location.reload();
+      }
+    });
+  }
+
+  // If there's already a waiting worker, activate it
+  if (swRegistration?.waiting) {
+    reloadScheduled = true;
+    swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    // Fallback reload after 1 second if controllerchange doesn't fire
+    setTimeout(() => window.location.reload(), 1000);
+    return;
+  }
+
+  // Try to check for updates
+  if (swRegistration) {
+    try {
+      await swRegistration.update();
+      // Check if we now have a waiting worker
+      if (swRegistration.waiting) {
+        reloadScheduled = true;
+        swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        setTimeout(() => window.location.reload(), 1000);
+        return;
+      }
+    } catch {
+      // Update check failed, proceed to hard refresh
+    }
+  }
+
+  // No waiting worker available, do a cache-busting hard refresh
+  // This bypasses the browser cache without destroying localStorage
+  window.location.href = window.location.href.split('?')[0] + '?refresh=' + Date.now();
+}
+
+/**
+ * Nuclear option - only use when app is completely broken.
+ * Clears all caches and unregisters service workers.
+ * WARNING: May cause issues on iOS PWAs.
+ */
+export async function hardReset(): Promise<void> {
   if ('caches' in window) {
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames.map(name => caches.delete(name)));
   }
 
-  // Unregister service worker and reload
   if ('serviceWorker' in navigator) {
     const registrations = await navigator.serviceWorker.getRegistrations();
     await Promise.all(registrations.map(reg => reg.unregister()));

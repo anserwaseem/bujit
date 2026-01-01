@@ -20,6 +20,7 @@ const Index = () => {
     settings,
     stats,
     groupedTransactions,
+    quickAddSuggestions,
     toggleTheme,
     addTransaction,
     deleteTransaction,
@@ -81,6 +82,7 @@ const Index = () => {
               <TransactionInput 
                 paymentModes={paymentModes} 
                 currencySymbol={settings.currencySymbol}
+                quickAddSuggestions={quickAddSuggestions}
                 onAdd={addTransaction} 
               />
             </section>

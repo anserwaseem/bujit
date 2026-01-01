@@ -113,19 +113,51 @@ export function useBudgly() {
     };
   }, [transactions]);
 
-  // Group transactions by date
+  // Group transactions by date with daily totals
   const groupedTransactions = useMemo(() => {
-    const groups: Record<string, Transaction[]> = {};
+    const groups: Record<string, { transactions: Transaction[], dayTotal: number }> = {};
     transactions.forEach(t => {
       const dateKey = new Date(t.date).toDateString();
       if (!groups[dateKey]) {
-        groups[dateKey] = [];
+        groups[dateKey] = { transactions: [], dayTotal: 0 };
       }
-      groups[dateKey].push(t);
+      groups[dateKey].transactions.push(t);
+      if (t.type === 'expense') {
+        groups[dateKey].dayTotal += t.amount;
+      }
     });
     return Object.entries(groups)
       .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
-      .slice(0, 10); // Show last 10 days
+      .slice(0, 10);
+  }, [transactions]);
+
+  // Quick add suggestions based on recent frequent transactions
+  const quickAddSuggestions = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const recentTransactions = transactions.filter(
+      t => t.type === 'expense' && new Date(t.date) >= sevenDaysAgo
+    );
+
+    // Group by reason + paymentMode + amount
+    const frequencyMap = new Map<string, { transaction: Transaction; count: number }>();
+    recentTransactions.forEach(t => {
+      const key = `${t.reason.toLowerCase()}_${t.paymentMode}_${t.amount}`;
+      const existing = frequencyMap.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        frequencyMap.set(key, { transaction: t, count: 1 });
+      }
+    });
+
+    // Sort by frequency, return top 4
+    return Array.from(frequencyMap.values())
+      .filter(item => item.count >= 2) // Only show if used 2+ times
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4)
+      .map(item => item.transaction);
   }, [transactions]);
 
   return {
@@ -135,6 +167,7 @@ export function useBudgly() {
     settings,
     stats,
     groupedTransactions,
+    quickAddSuggestions,
     toggleTheme,
     addTransaction: handleAddTransaction,
     deleteTransaction: handleDeleteTransaction,

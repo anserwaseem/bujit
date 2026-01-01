@@ -10,15 +10,22 @@ import { Calendar } from '@/components/ui/calendar';
 interface TransactionInputProps {
   paymentModes: PaymentMode[];
   currencySymbol: string;
+  quickAddSuggestions: Transaction[];
   onAdd: (transaction: Omit<Transaction, 'id'>) => void;
 }
 
-export function TransactionInput({ paymentModes, currencySymbol, onAdd }: TransactionInputProps) {
+export function TransactionInput({ paymentModes, currencySymbol, quickAddSuggestions, onAdd }: TransactionInputProps) {
   const [input, setInput] = useState('');
   const [isIncome, setIsIncome] = useState(false);
   const [selectedNecessity, setSelectedNecessity] = useState<NecessityType>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
+
+  const handleQuickAdd = (suggestion: Transaction) => {
+    setInput(`${suggestion.reason} ${suggestion.paymentMode} ${suggestion.amount}`);
+    setSelectedNecessity(suggestion.necessity);
+    setIsIncome(false);
+  };
 
   const parsed = useMemo(() => parseInput(input, paymentModes), [input, paymentModes]);
 
@@ -49,6 +56,22 @@ export function TransactionInput({ paymentModes, currencySymbol, onAdd }: Transa
 
   return (
     <div className="space-y-4">
+      {/* Quick Add Pills */}
+      {quickAddSuggestions.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+          {quickAddSuggestions.map((suggestion, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleQuickAdd(suggestion)}
+              className="shrink-0 px-3 py-1.5 rounded-full bg-muted text-sm font-medium 
+                         text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+            >
+              {suggestion.reason} {suggestion.paymentMode} {currencySymbol}{suggestion.amount.toLocaleString('en-PK')}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Type Toggle - More intuitive with labels */}
       <div className="flex rounded-xl bg-muted p-1">
         <button

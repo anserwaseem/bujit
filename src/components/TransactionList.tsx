@@ -4,7 +4,7 @@ import { getRelativeDate } from '@/lib/parser';
 import { Receipt } from 'lucide-react';
 
 interface TransactionListProps {
-  groupedTransactions: [string, Transaction[]][];
+  groupedTransactions: [string, { transactions: Transaction[], dayTotal: number }][];
   currencySymbol: string;
   onDelete: (id: string) => void;
   onEdit: (transaction: Transaction) => void;
@@ -34,11 +34,18 @@ export function TransactionList({
 
   return (
     <div className="space-y-6">
-      {groupedTransactions.map(([dateKey, transactions]) => (
+      {groupedTransactions.map(([dateKey, { transactions, dayTotal }]) => (
         <div key={dateKey} className="space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground px-1">
-            {getRelativeDate(dateKey)}
-          </h3>
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              {getRelativeDate(dateKey)}
+            </h3>
+            {dayTotal > 0 && (
+              <span className="text-sm font-mono font-medium text-expense">
+                −{currencySymbol}{dayTotal.toLocaleString('en-PK')}
+              </span>
+            )}
+          </div>
           <div className="space-y-1">
             {transactions.map((transaction) => (
               <TransactionCard

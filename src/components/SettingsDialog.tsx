@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { X, Plus, Trash2, Eye, EyeOff, RefreshCw, Download, Upload, FileText, Pencil, Check } from 'lucide-react';
 import { AppSettings, PaymentMode, Transaction } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { checkForUpdates, forceRefresh } from '@/lib/pwa';
+import { safeUpdate } from '@/lib/pwa';
 import { useToast } from '@/hooks/use-toast';
 import { generateCSVTemplate, exportTransactionsToCSV, parseCSVToTransactions, downloadFile } from '@/lib/csv';
 
@@ -109,10 +109,10 @@ export function SettingsDialog({
   const handleForceRefresh = async () => {
     setIsRefreshing(true);
     toast({
-      title: "Refreshing...",
-      description: "Clearing cache and reloading app.",
+      title: "Updating...",
+      description: "Checking for updates. Your data is preserved.",
     });
-    await forceRefresh();
+    await safeUpdate();
   };
 
   const handleDownloadTemplate = () => {
@@ -263,7 +263,7 @@ export function SettingsDialog({
                   {isRefreshing ? "Updating..." : "Update App"}
                 </button>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Clears cache and reloads to get the latest version.
+                  Checks for updates and reloads. Your data is preserved.
                 </p>
               </div>
             </div>
