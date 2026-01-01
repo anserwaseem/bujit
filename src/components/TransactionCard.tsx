@@ -1,15 +1,23 @@
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 import { Transaction, NecessityType } from '@/lib/types';
 import { formatAmount } from '@/lib/parser';
 import { cn } from '@/lib/utils';
 
 interface TransactionCardProps {
   transaction: Transaction;
+  currencySymbol: string;
   onDelete: (id: string) => void;
+  onEdit: (transaction: Transaction) => void;
   onUpdateNecessity: (id: string, necessity: NecessityType) => void;
 }
 
-export function TransactionCard({ transaction, onDelete, onUpdateNecessity }: TransactionCardProps) {
+export function TransactionCard({ 
+  transaction, 
+  currencySymbol,
+  onDelete, 
+  onEdit,
+  onUpdateNecessity 
+}: TransactionCardProps) {
   const handleNecessityClick = (necessity: NecessityType) => {
     onUpdateNecessity(
       transaction.id,
@@ -48,9 +56,18 @@ export function TransactionCard({ transaction, onDelete, onUpdateNecessity }: Tr
           "font-mono font-semibold",
           transaction.type === 'expense' ? "text-expense" : "text-income"
         )}>
-          {transaction.type === 'expense' ? '-' : '+'}₹{formatAmount(transaction.amount)}
+          {transaction.type === 'expense' ? '-' : '+'}{currencySymbol}{formatAmount(transaction.amount)}
         </p>
       </div>
+
+      {/* Edit */}
+      <button
+        onClick={() => onEdit(transaction)}
+        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md text-muted-foreground 
+                   hover:text-primary hover:bg-primary/10 transition-all"
+      >
+        <Pencil className="w-4 h-4" />
+      </button>
 
       {/* Delete */}
       <button

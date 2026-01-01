@@ -1,14 +1,23 @@
-import { Transaction, PaymentMode } from './types';
+import { Transaction, PaymentMode, AppSettings } from './types';
 
 const TRANSACTIONS_KEY = 'budgeter_transactions';
 const MODES_KEY = 'budgeter_payment_modes';
 const THEME_KEY = 'budgeter_theme';
+const SETTINGS_KEY = 'budgeter_settings';
 
 const DEFAULT_MODES: PaymentMode[] = [
   { id: '1', name: 'Cash', shorthand: 'C' },
   { id: '2', name: 'Credit Card', shorthand: 'CC' },
   { id: '3', name: 'Debit', shorthand: 'D' },
+  { id: '4', name: 'JazzCash', shorthand: 'JC' },
+  { id: '5', name: 'EasyPaisa', shorthand: 'EP' },
 ];
+
+const DEFAULT_SETTINGS: AppSettings = {
+  currency: 'PKR',
+  currencySymbol: 'Rs.',
+  geminiApiKey: '',
+};
 
 export function getTransactions(): Transaction[] {
   try {
@@ -68,4 +77,17 @@ export function getTheme(): 'light' | 'dark' {
 
 export function saveTheme(theme: 'light' | 'dark'): void {
   localStorage.setItem(THEME_KEY, theme);
+}
+
+export function getSettings(): AppSettings {
+  try {
+    const data = localStorage.getItem(SETTINGS_KEY);
+    return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
+export function saveSettings(settings: AppSettings): void {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }

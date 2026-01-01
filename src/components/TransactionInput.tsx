@@ -6,10 +6,11 @@ import { cn } from '@/lib/utils';
 
 interface TransactionInputProps {
   paymentModes: PaymentMode[];
+  currencySymbol: string;
   onAdd: (transaction: Omit<Transaction, 'id'>) => void;
 }
 
-export function TransactionInput({ paymentModes, onAdd }: TransactionInputProps) {
+export function TransactionInput({ paymentModes, currencySymbol, onAdd }: TransactionInputProps) {
   const [input, setInput] = useState('');
   const [selectedNecessity, setSelectedNecessity] = useState<NecessityType>(null);
 
@@ -46,7 +47,7 @@ export function TransactionInput({ paymentModes, onAdd }: TransactionInputProps)
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="fuel CC 3000"
+          placeholder="chai JC 50"
           className="w-full bg-card border border-border rounded-lg px-4 py-4 text-lg font-mono 
                      placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 
                      focus:ring-primary/30 focus:border-primary transition-all"
@@ -99,7 +100,7 @@ export function TransactionInput({ paymentModes, onAdd }: TransactionInputProps)
                 "font-mono font-semibold",
                 parsed.amount ? "text-expense" : "text-muted-foreground"
               )}>
-                {parsed.amount ? `₹${parsed.amount.toLocaleString('en-IN')}` : '—'}
+                {parsed.amount ? `${currencySymbol}${parsed.amount.toLocaleString('en-PK')}` : '—'}
               </p>
             </div>
           </div>

@@ -23,3 +23,16 @@ export interface ParsedInput {
   amount: number | null;
   isValid: boolean;
 }
+
+export interface AppSettings {
+  currency: string;
+  currencySymbol: string;
+  geminiApiKey: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}

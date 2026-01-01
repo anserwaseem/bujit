@@ -5,13 +5,17 @@ import { Receipt } from 'lucide-react';
 
 interface TransactionListProps {
   groupedTransactions: [string, Transaction[]][];
+  currencySymbol: string;
   onDelete: (id: string) => void;
+  onEdit: (transaction: Transaction) => void;
   onUpdateNecessity: (id: string, necessity: NecessityType) => void;
 }
 
 export function TransactionList({ 
   groupedTransactions, 
+  currencySymbol,
   onDelete, 
+  onEdit,
   onUpdateNecessity 
 }: TransactionListProps) {
   if (groupedTransactions.length === 0) {
@@ -40,7 +44,9 @@ export function TransactionList({
               <TransactionCard
                 key={transaction.id}
                 transaction={transaction}
+                currencySymbol={currencySymbol}
                 onDelete={onDelete}
+                onEdit={onEdit}
                 onUpdateNecessity={onUpdateNecessity}
               />
             ))}

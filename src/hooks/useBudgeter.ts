@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Transaction, PaymentMode, NecessityType } from '@/lib/types';
+import { Transaction, PaymentMode, NecessityType, AppSettings } from '@/lib/types';
 import {
   getTransactions,
   addTransaction,
@@ -9,17 +9,25 @@ import {
   savePaymentModes,
   getTheme,
   saveTheme,
+  getSettings,
+  saveSettings,
 } from '@/lib/storage';
 
 export function useBudgeter() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [paymentModes, setPaymentModes] = useState<PaymentMode[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [settings, setSettings] = useState<AppSettings>({
+    currency: 'PKR',
+    currencySymbol: 'Rs.',
+    geminiApiKey: '',
+  });
 
   // Load data on mount
   useEffect(() => {
     setTransactions(getTransactions());
     setPaymentModes(getPaymentModes());
+    setSettings(getSettings());
     const savedTheme = getTheme();
     setTheme(savedTheme);
     document.documentElement.classList.toggle('dark', savedTheme === 'dark');
@@ -55,19 +63,20 @@ export function useBudgeter() {
     setTransactions(updated);
   }, []);
 
-  const handleAddPaymentMode = useCallback(
-    (mode: Omit<PaymentMode, 'id'>) => {
-      const newMode: PaymentMode = {
-        ...mode,
-        id: crypto.randomUUID(),
-      };
-      const updated = [...paymentModes, newMode];
-      setPaymentModes(updated);
-      savePaymentModes(updated);
-      return newMode;
-    },
-    [paymentModes]
-  );
+  const handleUpdateTransaction = useCallback((id: string, updates: Partial<Transaction>) => {
+    const updated = updateTransaction(id, updates);
+    setTransactions(updated);
+  }, []);
+
+  const handleUpdatePaymentModes = useCallback((modes: PaymentMode[]) => {
+    setPaymentModes(modes);
+    savePaymentModes(modes);
+  }, []);
+
+  const handleUpdateSettings = useCallback((newSettings: AppSettings) => {
+    setSettings(newSettings);
+    saveSettings(newSettings);
+  }, []);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -117,12 +126,15 @@ export function useBudgeter() {
     transactions,
     paymentModes,
     theme,
+    settings,
     stats,
     groupedTransactions,
     toggleTheme,
     addTransaction: handleAddTransaction,
     deleteTransaction: handleDeleteTransaction,
     updateNecessity: handleUpdateNecessity,
-    addPaymentMode: handleAddPaymentMode,
+    updateTransaction: handleUpdateTransaction,
+    updatePaymentModes: handleUpdatePaymentModes,
+    updateSettings: handleUpdateSettings,
   };
 }
