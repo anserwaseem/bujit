@@ -1,7 +1,7 @@
 import { Transaction, NecessityType } from '@/lib/types';
 import { TransactionCard } from './TransactionCard';
 import { getRelativeDate } from '@/lib/parser';
-import { Receipt, Sparkles, TrendingUp, Zap, ChevronDown, Search, X } from 'lucide-react';
+import { Receipt, Sparkles, TrendingUp, Zap, ChevronDown, Search, X, SlidersHorizontal } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
@@ -47,6 +47,7 @@ export function TransactionList({
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'expense' | 'income'>('all');
   const [necessityFilter, setNecessityFilter] = useState<'all' | 'need' | 'want' | 'uncategorized'>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Rotate tips every 4 seconds
   useEffect(() => {
@@ -194,91 +195,118 @@ export function TransactionList({
   const hasActiveFilters = searchQuery || typeFilter !== 'all' || necessityFilter !== 'all';
 
   return (
-    <div className="space-y-4">
-      {/* Search, Filter, and Group Mode */}
-      <div className="space-y-2">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search transactions..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9 h-9 text-sm"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-            </button>
+    <div className="space-y-3">
+      {/* Divider with Filter Toggle */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-border" />
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+            "border border-border/50 hover:border-border",
+            showFilters || hasActiveFilters
+              ? "bg-primary/10 text-primary border-primary/30" 
+              : "bg-muted/50 text-muted-foreground hover:text-foreground"
           )}
-        </div>
-        
-        {/* Filters Row */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Group Mode Toggle */}
-          <div className="flex gap-0.5 p-0.5 bg-muted rounded-md">
-            {(['day', 'month', 'year'] as GroupMode[]).map(mode => (
-              <button
-                key={mode}
-                onClick={() => {
-                  setGroupMode(mode);
-                  setExpandedGroups(new Set());
-                }}
-                className={cn(
-                  "px-2 py-1 rounded text-xs font-medium transition-all capitalize",
-                  groupMode === mode 
-                    ? "bg-background text-foreground shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
-
-          {/* Type Filter */}
-          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as typeof typeFilter)}>
-            <SelectTrigger className="w-[100px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="expense">Expenses</SelectItem>
-              <SelectItem value="income">Income</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Necessity Filter */}
-          <Select value={necessityFilter} onValueChange={(v) => setNecessityFilter(v as typeof necessityFilter)}>
-            <SelectTrigger className="w-[120px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="need">Needs</SelectItem>
-              <SelectItem value="want">Wants</SelectItem>
-              <SelectItem value="uncategorized">Uncategorized</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Clear Filters */}
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span>Filters</span>
           {hasActiveFilters && (
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setTypeFilter('all');
-                setNecessityFilter('all');
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground underline"
-            >
-              Clear
-            </button>
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
           )}
-        </div>
+        </button>
+        <div className="flex-1 h-px bg-border" />
       </div>
+
+      {/* Collapsible Filter Panel */}
+      <Collapsible open={showFilters}>
+        <CollapsibleContent>
+          <div className="space-y-3 p-3 bg-muted/30 rounded-2xl border border-border/50 animate-fade-in">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search transactions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-9 h-9 text-sm bg-background rounded-xl"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            
+            {/* Filters Row */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Group Mode Toggle - Improved Design */}
+              <div className="flex p-1 bg-background rounded-xl border border-border/50">
+                {(['day', 'month', 'year'] as GroupMode[]).map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      setGroupMode(mode);
+                      setExpandedGroups(new Set());
+                    }}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-medium transition-all capitalize",
+                      groupMode === mode 
+                        ? "bg-primary text-primary-foreground shadow-sm" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+
+              {/* Type Filter */}
+              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as typeof typeFilter)}>
+                <SelectTrigger className="w-auto min-w-[90px] h-8 text-xs rounded-xl bg-background border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="expense">Expenses</SelectItem>
+                  <SelectItem value="income">Income</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Necessity Filter */}
+              <Select value={necessityFilter} onValueChange={(v) => setNecessityFilter(v as typeof necessityFilter)}>
+                <SelectTrigger className="w-auto min-w-[100px] h-8 text-xs rounded-xl bg-background border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="need">Needs</SelectItem>
+                  <SelectItem value="want">Wants</SelectItem>
+                  <SelectItem value="uncategorized">Uncategorized</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setTypeFilter('all');
+                    setNecessityFilter('all');
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Transaction Groups */}
       <div className="space-y-2">
@@ -294,17 +322,17 @@ export function TransactionList({
               style={{ animationDelay: `${groupIdx * 50}ms` }}
             >
               <CollapsibleTrigger className="w-full">
-                <div className="flex items-center justify-between px-3 py-2.5 bg-muted/50 rounded-lg hover:bg-muted transition-colors group">
+                <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors group">
                   <div className="flex items-center gap-2">
                     <ChevronDown className={cn(
-                      "w-4 h-4 text-muted-foreground transition-transform",
+                      "w-4 h-4 text-muted-foreground transition-transform duration-200",
                       isExpanded && "rotate-180"
                     )} />
                     <span className="text-sm font-medium text-foreground">
                       {getGroupLabel(key)}
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({transactions.length})
+                    <span className="text-xs text-muted-foreground px-1.5 py-0.5 bg-background/50 rounded-md">
+                      {transactions.length}
                     </span>
                   </div>
                   {dayTotal > 0 && (
