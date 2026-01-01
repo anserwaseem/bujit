@@ -178,7 +178,7 @@ export function SettingsDialog({
                   type="text"
                   value={newModeShort}
                   onChange={(e) => setNewModeShort(e.target.value)}
-                  placeholder="Code"
+                  placeholder="Code (JC)"
                   className="w-24 bg-input border border-border rounded-lg px-3 py-2 text-sm uppercase
                              focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   maxLength={4}
