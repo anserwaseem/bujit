@@ -117,7 +117,7 @@ export function SettingsDialog({
 
   const handleDownloadTemplate = () => {
     const template = generateCSVTemplate();
-    downloadFile(template, 'budgly-template.csv');
+    downloadFile(template, 'bujit-template.csv');
     toast({
       title: "Template Downloaded",
       description: "Fill in your data following the example format.",
@@ -135,7 +135,7 @@ export function SettingsDialog({
     }
     const csv = exportTransactionsToCSV(transactions);
     const date = new Date().toISOString().split('T')[0];
-    downloadFile(csv, `budgly-export-${date}.csv`);
+    downloadFile(csv, `bujit-export-${date}.csv`);
     toast({
       title: "Data Exported",
       description: `${transactions.length} transactions exported successfully.`,
