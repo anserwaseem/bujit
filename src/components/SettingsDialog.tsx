@@ -161,6 +161,7 @@ export function SettingsDialog({
           title: "Import Failed",
           description: errors.slice(0, 5).join('\n') + (errors.length > 5 ? `\n...and ${errors.length - 5} more errors` : ''),
           variant: "destructive",
+          duration: Infinity,
         });
         return; // Don't import anything
       }
