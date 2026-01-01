@@ -1,8 +1,11 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Plus, Check, Minus } from 'lucide-react';
+import { Plus, Check, Minus, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { parseInput } from '@/lib/parser';
 import { PaymentMode, Transaction, NecessityType } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 interface TransactionInputProps {
   paymentModes: PaymentMode[];
@@ -14,6 +17,8 @@ export function TransactionInput({ paymentModes, currencySymbol, onAdd }: Transa
   const [input, setInput] = useState('');
   const [isIncome, setIsIncome] = useState(false);
   const [selectedNecessity, setSelectedNecessity] = useState<NecessityType>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const parsed = useMemo(() => parseInput(input, paymentModes), [input, paymentModes]);
 
@@ -21,7 +26,7 @@ export function TransactionInput({ paymentModes, currencySymbol, onAdd }: Transa
     if (!parsed.isValid || !parsed.amount) return;
 
     onAdd({
-      date: new Date().toISOString(),
+      date: selectedDate.toISOString(),
       reason: parsed.reason,
       amount: parsed.amount,
       paymentMode: parsed.paymentMode,
@@ -31,7 +36,8 @@ export function TransactionInput({ paymentModes, currencySymbol, onAdd }: Transa
 
     setInput('');
     setSelectedNecessity(null);
-  }, [parsed, isIncome, selectedNecessity, onAdd]);
+    setSelectedDate(new Date());
+  }, [parsed, isIncome, selectedNecessity, selectedDate, onAdd]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && parsed.isValid) {
@@ -39,53 +45,91 @@ export function TransactionInput({ paymentModes, currencySymbol, onAdd }: Transa
     }
   };
 
+  const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+
   return (
     <div className="space-y-4">
-      {/* Main Input */}
-      <div className="relative flex gap-2">
-        {/* Income/Expense Toggle */}
+      {/* Type Toggle - More intuitive with labels */}
+      <div className="flex rounded-xl bg-muted p-1">
         <button
-          onClick={() => setIsIncome(!isIncome)}
+          onClick={() => setIsIncome(false)}
           className={cn(
-            "flex items-center justify-center w-12 h-12 rounded-lg text-lg font-bold transition-all shrink-0",
-            isIncome 
-              ? "bg-income/20 text-income ring-1 ring-income/30" 
-              : "bg-expense/20 text-expense ring-1 ring-expense/30"
+            "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all",
+            !isIncome 
+              ? "bg-expense/20 text-expense shadow-sm" 
+              : "text-muted-foreground hover:text-foreground"
           )}
-          title={isIncome ? "Income" : "Expense"}
         >
-          {isIncome ? <Plus className="w-5 h-5" /> : <Minus className="w-5 h-5" />}
+          <Minus className="w-4 h-4" />
+          Expense
         </button>
+        <button
+          onClick={() => setIsIncome(true)}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all",
+            isIncome 
+              ? "bg-income/20 text-income shadow-sm" 
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Plus className="w-4 h-4" />
+          Income
+        </button>
+      </div>
 
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="chai JC 50"
-            className="w-full bg-card border border-border rounded-lg px-4 py-3 text-lg font-mono 
-                       placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 
-                       focus:ring-primary/30 focus:border-primary transition-all"
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={!parsed.isValid}
-            className={cn(
-              "absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md transition-all",
-              parsed.isValid
-                ? "bg-primary text-primary-foreground hover:opacity-90 active:scale-95"
-                : "bg-muted text-muted-foreground cursor-not-allowed"
-            )}
-          >
-            <Check className="w-5 h-5" />
+      {/* Date Selector - Simple pill style */}
+      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <PopoverTrigger asChild>
+          <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <CalendarIcon className="w-3.5 h-3.5" />
+            {isToday ? 'Today' : format(selectedDate, 'MMM d, yyyy')}
           </button>
-        </div>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => {
+              if (date) {
+                setSelectedDate(date);
+                setCalendarOpen(false);
+              }
+            }}
+            initialFocus
+            className="p-3 pointer-events-auto"
+          />
+        </PopoverContent>
+      </Popover>
+
+      {/* Main Input */}
+      <div className="relative">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="chai JC 50"
+          className="w-full bg-card border border-border rounded-xl px-4 py-3.5 text-lg font-mono 
+                     placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 
+                     focus:ring-primary/30 focus:border-primary transition-all pr-14"
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={!parsed.isValid}
+          className={cn(
+            "absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-lg transition-all",
+            parsed.isValid
+              ? "bg-primary text-primary-foreground hover:opacity-90 active:scale-95"
+              : "bg-muted text-muted-foreground cursor-not-allowed"
+          )}
+        >
+          <Check className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Live Preview */}
       {input.length > 0 && (
-        <div className="bg-card border border-border rounded-lg p-4 animate-fade-in">
+        <div className="bg-card border border-border rounded-xl p-4 animate-fade-in">
           <div className="flex items-center justify-between mb-3">
             <span className={cn(
               "text-xs uppercase tracking-wider font-medium",
