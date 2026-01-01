@@ -113,18 +113,20 @@ export function parseCSVToTransactions(
         continue;
       }
 
-      // Validate amount - must be positive integer
+      // Validate amount - must be positive number (up to 2 decimal places)
       const amount = parseFloat(amountStr.trim());
       if (isNaN(amount)) {
         errors.push(`Row ${i + 1}: Invalid amount "${amountStr}". Must be a number`);
         continue;
       }
-      if (amount < 1) {
-        errors.push(`Row ${i + 1}: Amount must be at least 1 (got "${amountStr}")`);
+      if (amount <= 0) {
+        errors.push(`Row ${i + 1}: Amount must be greater than 0 (got "${amountStr}")`);
         continue;
       }
-      if (!Number.isInteger(amount)) {
-        errors.push(`Row ${i + 1}: Amount must be a whole number (got "${amountStr}")`);
+      // Check for more than 2 decimal places
+      const decimalParts = amountStr.trim().split('.');
+      if (decimalParts.length > 1 && decimalParts[1].length > 2) {
+        errors.push(`Row ${i + 1}: Amount can have max 2 decimal places (got "${amountStr}")`);
         continue;
       }
 
