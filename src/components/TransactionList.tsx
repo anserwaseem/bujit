@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+
 
 interface TransactionListProps {
   groupedTransactions: [string, { transactions: Transaction[], dayTotal: number }][];
@@ -558,45 +558,56 @@ export function TransactionList({
                       {transactions.length}
                     </span>
                   </div>
-                  <HoverCard openDelay={100} closeDelay={100}>
-                    <HoverCardTrigger asChild>
-                      <span 
-                        className={cn(
-                          "text-sm font-mono font-medium cursor-pointer hover:underline",
-                          groupNet >= 0 ? "text-income" : "text-expense"
-                        )}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {groupNet >= 0 ? '+' : ''}{currencySymbol}{Math.abs(groupNet).toLocaleString('en-PK')}
-                      </span>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-48 p-3" align="end">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-muted-foreground">Income</span>
-                          <span className="text-sm font-mono font-medium text-income">
-                            +{currencySymbol}{groupIncome.toLocaleString('en-PK')}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-muted-foreground">Expenses</span>
-                          <span className="text-sm font-mono font-medium text-expense">
-                            −{currencySymbol}{groupExpense.toLocaleString('en-PK')}
-                          </span>
-                        </div>
-                        <div className="h-px bg-border my-1" />
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-medium text-foreground">Net</span>
-                          <span className={cn(
-                            "text-sm font-mono font-semibold",
+                  {groupIncome > 0 && groupExpense > 0 ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <span 
+                          className={cn(
+                            "text-sm font-mono font-medium cursor-pointer hover:underline",
                             groupNet >= 0 ? "text-income" : "text-expense"
-                          )}>
-                            {groupNet >= 0 ? '+' : ''}{currencySymbol}{Math.abs(groupNet).toLocaleString('en-PK')}
-                          </span>
+                          )}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {groupNet >= 0 ? '+' : ''}{currencySymbol}{Math.abs(groupNet).toLocaleString('en-PK')}
+                        </span>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-3" align="end">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">Income</span>
+                            <span className="text-sm font-mono font-medium text-income">
+                              +{currencySymbol}{groupIncome.toLocaleString('en-PK')}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">Expenses</span>
+                            <span className="text-sm font-mono font-medium text-expense">
+                              −{currencySymbol}{groupExpense.toLocaleString('en-PK')}
+                            </span>
+                          </div>
+                          <div className="h-px bg-border my-1" />
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-medium text-foreground">Net</span>
+                            <span className={cn(
+                              "text-sm font-mono font-semibold",
+                              groupNet >= 0 ? "text-income" : "text-expense"
+                            )}>
+                              {groupNet >= 0 ? '+' : ''}{currencySymbol}{Math.abs(groupNet).toLocaleString('en-PK')}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </HoverCardContent>
-                  </HoverCard>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <span 
+                      className={cn(
+                        "text-sm font-mono font-medium",
+                        groupNet >= 0 ? "text-income" : "text-expense"
+                      )}
+                    >
+                      {groupNet >= 0 ? '+' : ''}{currencySymbol}{Math.abs(groupNet).toLocaleString('en-PK')}
+                    </span>
+                  )}
                 </div>
               </CollapsibleTrigger>
               
