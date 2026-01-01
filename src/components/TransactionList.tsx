@@ -18,13 +18,15 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+
 interface TransactionListProps {
   groupedTransactions: [string, { transactions: Transaction[], dayTotal: number }][];
   currencySymbol: string;
   onDelete: (id: string) => void;
   onEdit: (transaction: Transaction) => void;
   onUpdateNecessity: (id: string, necessity: NecessityType) => void;
-  onDuplicate?: (transaction: Transaction) => void;
+  onDuplicate?: (transaction: Transaction) => Transaction | void;
 }
 
 // Animated empty state tips
@@ -530,6 +532,9 @@ export function TransactionList({
       <div className="space-y-2">
         {visibleTransactions.map(([key, { transactions, dayTotal }], groupIdx) => {
           const isExpanded = expandedGroups.has(key);
+          const groupIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+          const groupExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+          const groupNet = groupIncome - groupExpense;
           
           return (
             <Collapsible
@@ -553,11 +558,45 @@ export function TransactionList({
                       {transactions.length}
                     </span>
                   </div>
-                  {dayTotal > 0 && (
-                    <span className="text-sm font-mono font-medium text-expense">
-                      −{currencySymbol}{dayTotal.toLocaleString('en-PK')}
-                    </span>
-                  )}
+                  <HoverCard openDelay={100} closeDelay={100}>
+                    <HoverCardTrigger asChild>
+                      <span 
+                        className={cn(
+                          "text-sm font-mono font-medium cursor-pointer hover:underline",
+                          groupNet >= 0 ? "text-income" : "text-expense"
+                        )}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {groupNet >= 0 ? '+' : ''}{currencySymbol}{Math.abs(groupNet).toLocaleString('en-PK')}
+                      </span>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-48 p-3" align="end">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground">Income</span>
+                          <span className="text-sm font-mono font-medium text-income">
+                            +{currencySymbol}{groupIncome.toLocaleString('en-PK')}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground">Expenses</span>
+                          <span className="text-sm font-mono font-medium text-expense">
+                            −{currencySymbol}{groupExpense.toLocaleString('en-PK')}
+                          </span>
+                        </div>
+                        <div className="h-px bg-border my-1" />
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-medium text-foreground">Net</span>
+                          <span className={cn(
+                            "text-sm font-mono font-semibold",
+                            groupNet >= 0 ? "text-income" : "text-expense"
+                          )}>
+                            {groupNet >= 0 ? '+' : ''}{currencySymbol}{Math.abs(groupNet).toLocaleString('en-PK')}
+                          </span>
+                        </div>
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
                 </div>
               </CollapsibleTrigger>
               

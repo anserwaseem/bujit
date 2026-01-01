@@ -13,7 +13,7 @@ interface TransactionCardProps {
   onDelete: (id: string) => void;
   onEdit: (transaction: Transaction) => void;
   onUpdateNecessity: (id: string, necessity: NecessityType) => void;
-  onDuplicate?: (transaction: Transaction) => void;
+  onDuplicate?: (transaction: Transaction) => Transaction | void;
   showDate?: boolean;
 }
 
@@ -61,16 +61,27 @@ export function TransactionCard({
       
       if (onDuplicate) {
         haptic('success');
-        onDuplicate(transaction);
+        const newTransaction = onDuplicate(transaction);
         toast({
           title: "Duplicated!",
           description: `${currencySymbol}${transaction.amount.toLocaleString('en-PK')} for ${transaction.reason}`,
+          action: newTransaction ? (
+            <button
+              onClick={() => {
+                onDelete(newTransaction.id);
+                haptic('light');
+              }}
+              className="text-xs font-medium px-2.5 py-1.5 rounded-md bg-muted hover:bg-muted/80 transition-colors"
+            >
+              Undo
+            </button>
+          ) : undefined,
         });
       }
     }
     
     lastTapRef.current = now;
-  }, [transaction, onDuplicate, currencySymbol]);
+  }, [transaction, onDuplicate, onDelete, currencySymbol]);
 
   return (
     <SwipeableCard
