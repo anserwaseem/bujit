@@ -13,7 +13,7 @@ import {
   saveSettings,
 } from '@/lib/storage';
 
-export function useBudgeter() {
+export function useBudgly() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [paymentModes, setPaymentModes] = useState<PaymentMode[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');

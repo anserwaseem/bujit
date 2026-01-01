@@ -1,9 +1,9 @@
 import { Transaction, PaymentMode, AppSettings } from './types';
 
-const TRANSACTIONS_KEY = 'budgeter_transactions';
-const MODES_KEY = 'budgeter_payment_modes';
-const THEME_KEY = 'budgeter_theme';
-const SETTINGS_KEY = 'budgeter_settings';
+const TRANSACTIONS_KEY = 'budgly_transactions';
+const MODES_KEY = 'budgly_payment_modes';
+const THEME_KEY = 'budgly_theme';
+const SETTINGS_KEY = 'budgly_settings';
 
 const DEFAULT_MODES: PaymentMode[] = [
   { id: '1', name: 'Cash', shorthand: 'C' },

@@ -5,9 +5,9 @@ const CSV_HEADERS = ['date', 'reason', 'amount', 'paymentMode', 'type', 'necessi
 export function generateCSVTemplate(): string {
   const headers = CSV_HEADERS.join(',');
   const exampleRows = [
-    '2024-01-15,Groceries,2500,Cash,expense,need',
-    '2024-01-15,Coffee,350,JC,expense,want',
-    '2024-01-14,Salary,50000,Bank,income,',
+    '2025-01-15,Groceries,2500,Cash,expense,need',
+    '2025-01-15,Coffee,350,JC,expense,want',
+    '2025-01-14,Salary,50000,Bank,income,',
   ];
   return [headers, ...exampleRows].join('\n');
 }
@@ -52,8 +52,15 @@ export function parseCSVToTransactions(csvContent: string): { transactions: Omit
 
       const [date, reason, amountStr, paymentMode, type, necessity] = values;
 
-      // Validate date
-      const dateObj = new Date(date);
+      // Validate and parse date (supports YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY)
+      let dateObj: Date;
+      const ddmmyyyyMatch = date.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (ddmmyyyyMatch) {
+        const [, day, month, year] = ddmmyyyyMatch;
+        dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else {
+        dateObj = new Date(date);
+      }
       if (isNaN(dateObj.getTime())) {
         errors.push(`Row ${i + 1}: Invalid date "${date}"`);
         continue;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useBudgeter } from '@/hooks/useBudgeter';
+import { useBudgly } from '@/hooks/useBudgly';
 import { Header } from '@/components/Header';
 import { StatsBar } from '@/components/StatsBar';
 import { TransactionInput } from '@/components/TransactionInput';
@@ -27,7 +27,7 @@ const Index = () => {
     updateTransaction,
     updatePaymentModes,
     updateSettings,
-  } = useBudgeter();
+  } = useBudgly();
 
   const [activeTab, setActiveTab] = useState<'transactions' | 'dashboard'>('transactions');
   const [showSettings, setShowSettings] = useState(false);
