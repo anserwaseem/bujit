@@ -196,9 +196,8 @@ export function TransactionList({
 
   return (
     <div className="space-y-3">
-      {/* Divider with Filter Toggle */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-border" />
+      {/* Filter Toggle */}
+      <div className="flex items-center justify-center">
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={cn(
@@ -215,7 +214,6 @@ export function TransactionList({
             <span className="w-1.5 h-1.5 rounded-full bg-primary" />
           )}
         </button>
-        <div className="flex-1 h-px bg-border" />
       </div>
 
       {/* Collapsible Filter Panel */}
@@ -270,7 +268,7 @@ export function TransactionList({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
                   <SelectItem value="expense">Expenses</SelectItem>
                   <SelectItem value="income">Income</SelectItem>
                 </SelectContent>
