@@ -114,8 +114,12 @@ const Index = () => {
         <SettingsDialog
           settings={settings}
           paymentModes={paymentModes}
+          transactions={transactions}
           onSaveSettings={updateSettings}
           onSavePaymentModes={updatePaymentModes}
+          onImportTransactions={(newTransactions) => {
+            newTransactions.forEach((t) => addTransaction(t));
+          }}
           onClose={() => setShowSettings(false)}
         />
       )}
