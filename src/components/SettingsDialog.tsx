@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, Eye, EyeOff, RefreshCw, Download } from 'lucide-react';
+import { X, Plus, Trash2, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { AppSettings, PaymentMode } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { checkForUpdates, forceRefresh } from '@/lib/pwa';
@@ -37,7 +37,6 @@ export function SettingsDialog({
   const [newModeShort, setNewModeShort] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'payments' | 'ai'>('general');
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleAddMode = () => {
@@ -73,30 +72,6 @@ export function SettingsDialog({
     }
   };
 
-  const handleCheckForUpdates = async () => {
-    setIsCheckingUpdate(true);
-    try {
-      const hasUpdate = await checkForUpdates();
-      if (hasUpdate) {
-        toast({
-          title: "Update Available!",
-          description: "A new version is ready. Tap 'Force Refresh' to update.",
-        });
-      } else {
-        toast({
-          title: "You're up to date!",
-          description: "You have the latest version of Budgly.",
-        });
-      }
-    } catch {
-      toast({
-        title: "Check failed",
-        description: "Couldn't check for updates. Try Force Refresh.",
-        variant: "destructive",
-      });
-    }
-    setIsCheckingUpdate(false);
-  };
 
   const handleForceRefresh = async () => {
     setIsRefreshing(true);
@@ -163,33 +138,20 @@ export function SettingsDialog({
               {/* App Update Section */}
               <div className="border-t border-border pt-6">
                 <h3 className="text-sm font-medium mb-3">App Updates</h3>
-                <div className="space-y-3">
-                  <button
-                    onClick={handleCheckForUpdates}
-                    disabled={isCheckingUpdate}
-                    className={cn(
-                      "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-colors",
-                      "bg-muted text-foreground hover:bg-muted/80"
-                    )}
-                  >
-                    <RefreshCw className={cn("w-4 h-4", isCheckingUpdate && "animate-spin")} />
-                    {isCheckingUpdate ? "Checking..." : "Check for Updates"}
-                  </button>
-                  <button
-                    onClick={handleForceRefresh}
-                    disabled={isRefreshing}
-                    className={cn(
-                      "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-colors",
-                      "bg-primary/10 text-primary hover:bg-primary/20"
-                    )}
-                  >
-                    <Download className={cn("w-4 h-4", isRefreshing && "animate-bounce")} />
-                    {isRefreshing ? "Refreshing..." : "Force Refresh App"}
-                  </button>
-                  <p className="text-xs text-muted-foreground">
-                    If you're not seeing the latest version, use "Force Refresh" to clear cache and reload.
-                  </p>
-                </div>
+                <button
+                  onClick={handleForceRefresh}
+                  disabled={isRefreshing}
+                  className={cn(
+                    "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-colors",
+                    "bg-primary text-primary-foreground hover:opacity-90"
+                  )}
+                >
+                  <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
+                  {isRefreshing ? "Updating..." : "Update App"}
+                </button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Clears cache and reloads to get the latest version.
+                </p>
               </div>
             </div>
           )}
