@@ -131,14 +131,16 @@ const Index = () => {
                 onDelete={deleteTransaction}
                 onEdit={setEditingTransaction}
                 onUpdateNecessity={updateNecessity}
-                onDuplicate={(t) => addTransaction({
-                  date: new Date().toISOString(),
-                  reason: t.reason,
-                  amount: t.amount,
-                  paymentMode: t.paymentMode,
-                  type: t.type,
-                  necessity: t.necessity,
-                })}
+                onDuplicate={(t) => {
+                  return addTransaction({
+                    date: new Date().toISOString(),
+                    reason: t.reason,
+                    amount: t.amount,
+                    paymentMode: t.paymentMode,
+                    type: t.type,
+                    necessity: t.necessity,
+                  });
+                }}
               />
             </section>
           </>
