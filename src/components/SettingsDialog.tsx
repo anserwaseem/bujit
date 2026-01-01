@@ -1,15 +1,18 @@
-import { useState } from 'react';
-import { X, Plus, Trash2, Eye, EyeOff, RefreshCw } from 'lucide-react';
-import { AppSettings, PaymentMode } from '@/lib/types';
+import { useState, useRef } from 'react';
+import { X, Plus, Trash2, Eye, EyeOff, RefreshCw, Download, Upload, FileText } from 'lucide-react';
+import { AppSettings, PaymentMode, Transaction } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { checkForUpdates, forceRefresh } from '@/lib/pwa';
 import { useToast } from '@/hooks/use-toast';
+import { generateCSVTemplate, exportTransactionsToCSV, parseCSVToTransactions, downloadFile } from '@/lib/csv';
 
 interface SettingsDialogProps {
   settings: AppSettings;
   paymentModes: PaymentMode[];
+  transactions: Transaction[];
   onSaveSettings: (settings: AppSettings) => void;
   onSavePaymentModes: (modes: PaymentMode[]) => void;
+  onImportTransactions: (transactions: Omit<Transaction, 'id'>[]) => void;
   onClose: () => void;
 }
 
@@ -26,8 +29,10 @@ const CURRENCIES = [
 export function SettingsDialog({
   settings,
   paymentModes,
+  transactions,
   onSaveSettings,
   onSavePaymentModes,
+  onImportTransactions,
   onClose,
 }: SettingsDialogProps) {
   const { toast } = useToast();
@@ -36,8 +41,9 @@ export function SettingsDialog({
   const [newModeName, setNewModeName] = useState('');
   const [newModeShort, setNewModeShort] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'payments' | 'ai'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'payments' | 'data' | 'ai'>('general');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddMode = () => {
     if (!newModeName.trim() || !newModeShort.trim()) return;
@@ -82,6 +88,70 @@ export function SettingsDialog({
     await forceRefresh();
   };
 
+  const handleDownloadTemplate = () => {
+    const template = generateCSVTemplate();
+    downloadFile(template, 'budgeter-template.csv');
+    toast({
+      title: "Template Downloaded",
+      description: "Fill in your data following the example format.",
+    });
+  };
+
+  const handleExportData = () => {
+    if (transactions.length === 0) {
+      toast({
+        title: "No Data",
+        description: "There are no transactions to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const csv = exportTransactionsToCSV(transactions);
+    const date = new Date().toISOString().split('T')[0];
+    downloadFile(csv, `budgeter-export-${date}.csv`);
+    toast({
+      title: "Data Exported",
+      description: `${transactions.length} transactions exported successfully.`,
+    });
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      const { transactions: parsed, errors } = parseCSVToTransactions(content);
+
+      if (errors.length > 0) {
+        toast({
+          title: "Import Errors",
+          description: `${errors.length} rows had errors. ${parsed.length} imported successfully.`,
+          variant: errors.length === parsed.length + errors.length ? "destructive" : "default",
+        });
+      }
+
+      if (parsed.length > 0) {
+        onImportTransactions(parsed);
+        toast({
+          title: "Import Successful",
+          description: `${parsed.length} transactions imported.`,
+        });
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl animate-scale-in max-h-[90vh] flex flex-col">
@@ -97,7 +167,7 @@ export function SettingsDialog({
 
         {/* Tabs */}
         <div className="flex gap-1 p-2 border-b border-border shrink-0">
-          {(['general', 'payments', 'ai'] as const).map((tab) => (
+          {(['general', 'payments', 'data', 'ai'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -108,7 +178,7 @@ export function SettingsDialog({
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
             >
-              {tab === 'ai' ? 'AI Assistant' : tab}
+              {tab === 'ai' ? 'AI' : tab}
             </button>
           ))}
         </div>
@@ -219,6 +289,74 @@ export function SettingsDialog({
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'data' && (
+            <div className="space-y-6">
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+
+              <p className="text-sm text-muted-foreground">
+                Import or export your transaction data using CSV format.
+              </p>
+
+              {/* Export Section */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Export Data</h3>
+                <button
+                  onClick={handleExportData}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium
+                             bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                >
+                  <Download className="w-4 h-4" />
+                  Export All Transactions
+                </button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Download all {transactions.length} transactions as a CSV file.
+                </p>
+              </div>
+
+              {/* Import Section */}
+              <div className="border-t border-border pt-6">
+                <h3 className="text-sm font-medium mb-3">Import Data</h3>
+                
+                <div className="space-y-3">
+                  <button
+                    onClick={handleDownloadTemplate}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium
+                               bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Download CSV Template
+                  </button>
+                  
+                  <button
+                    onClick={handleImportClick}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium
+                               bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import CSV File
+                  </button>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-3 mt-3">
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Steps:</strong> Download the template → Fill in your data → Import the file.
+                    <br />
+                    <span className="text-muted-foreground/80">
+                      Format: date, reason, amount, paymentMode, type (expense/income/savings), necessity (need/want or empty)
+                    </span>
+                  </p>
+                </div>
               </div>
             </div>
           )}
