@@ -121,8 +121,10 @@ export function SettingsDialog({
                 <select
                   value={localSettings.currency}
                   onChange={(e) => handleCurrencyChange(e.target.value)}
-                  className="w-full bg-input border border-border rounded-lg px-3 py-2.5 
-                             focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  className="w-full bg-input border border-border rounded-lg px-3 py-2.5 pr-8 appearance-none
+                             focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
+                             bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23888%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] 
+                             bg-[length:16px] bg-[right_8px_center] bg-no-repeat"
                 >
                   {CURRENCIES.map((c) => (
                     <option key={c.code} value={c.code}>
@@ -176,8 +178,8 @@ export function SettingsDialog({
                   type="text"
                   value={newModeShort}
                   onChange={(e) => setNewModeShort(e.target.value)}
-                  placeholder="Short (JC)"
-                  className="w-20 bg-input border border-border rounded-lg px-3 py-2 text-sm uppercase
+                  placeholder="Code"
+                  className="w-24 bg-input border border-border rounded-lg px-3 py-2 text-sm uppercase
                              focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   maxLength={4}
                 />
@@ -224,7 +226,7 @@ export function SettingsDialog({
           {activeTab === 'ai' && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Connect Google Gemini AI to get personalized budget advice in Roman Urdu. Ask things like "Meri wants kaisi hain?" or "Is mahine mein kitna bacha?"
+                Enable AI-powered insights for your spending. Get personalized analysis and advice in any language.
               </p>
 
               <div>
