@@ -134,6 +134,10 @@ export function TransactionList({
   }, []);
 
   // Infinite scroll with Intersection Observer
+  const loadMore = useCallback(() => {
+    setVisibleCount(prev => prev + ITEMS_PER_PAGE);
+  }, []);
+
   useEffect(() => {
     const loadMoreElement = loadMoreRef.current;
     if (!loadMoreElement) return;
@@ -141,16 +145,16 @@ export function TransactionList({
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount(prev => prev + ITEMS_PER_PAGE);
+          loadMore();
         }
       },
-      { threshold: 0.1, rootMargin: '100px' }
+      { threshold: 0.1, rootMargin: '200px' }
     );
 
     observer.observe(loadMoreElement);
 
     return () => observer.disconnect();
-  }, [visibleCount]);
+  }, [loadMore]);
 
   // Reset visible count when filters change
   useEffect(() => {
@@ -582,14 +586,14 @@ export function TransactionList({
           );
         })}
 
-        {/* Load More Trigger */}
-        {hasMore && (
-          <div ref={loadMoreRef} className="flex justify-center py-4">
+        {/* Load More Trigger - always render ref for observer */}
+        <div ref={loadMoreRef} className="flex justify-center py-4">
+          {hasMore && (
             <div className="text-xs text-muted-foreground animate-pulse">
               Loading more...
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Scroll to Top Button */}
