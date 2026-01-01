@@ -14,16 +14,17 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["favicon.ico"],
+      includeAssets: ["logo.svg"],
       manifest: {
-        name: "Budgly - Simple Expense Tracking",
-        short_name: "Budgly",
+        name: "Bujit — Simple Expense Tracking",
+        short_name: "Bujit",
         description: "Stupidly simple budgeting. Track expenses like taking notes.",
-        theme_color: "#1a1a1a",
+        theme_color: "#39C692",
         background_color: "#1a1a1a",
         display: "standalone",
         icons: [
-          { src: "/favicon.ico", sizes: "64x64", type: "image/x-icon" },
+          { src: "/logo.svg", sizes: "512x512", type: "image/svg+xml", purpose: "any" },
+          { src: "/logo.svg", sizes: "512x512", type: "image/svg+xml", purpose: "maskable" },
         ],
       },
       workbox: {
