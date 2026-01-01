@@ -1,4 +1,5 @@
-import { Sun, Moon, Wallet, Settings } from 'lucide-react';
+import { Sun, Moon, Settings } from 'lucide-react';
+import { Logo } from './Logo';
 
 interface HeaderProps {
   theme: 'light' | 'dark';
@@ -10,9 +11,7 @@ export function Header({ theme, onToggleTheme, onOpenSettings }: HeaderProps) {
   return (
     <header className="flex items-center justify-between py-4">
       <div className="flex items-center gap-2">
-        <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-          <Wallet className="w-5 h-5 text-primary-foreground" />
-        </div>
+        <Logo size={36} className="rounded-lg" />
         <span className="text-xl font-semibold text-foreground">Budgly</span>
       </div>
 
