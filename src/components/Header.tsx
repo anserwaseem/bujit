@@ -12,7 +12,7 @@ export function Header({ theme, onToggleTheme, onOpenSettings }: HeaderProps) {
     <header className="flex items-center justify-between py-4">
       <div className="flex items-center gap-2">
         <Logo size={36} className="rounded-lg" />
-        <span className="text-xl font-semibold text-foreground">Budgly</span>
+        <span className="text-xl font-semibold text-foreground">bujit</span>
       </div>
 
       <div className="flex items-center gap-2">
