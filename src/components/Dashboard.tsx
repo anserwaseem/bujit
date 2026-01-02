@@ -275,7 +275,7 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
       worstDay,
       needsWantsRatio,
     };
-  }, [transactions]);
+  }, [filteredTransactions, transactions, timePeriod]);
 
   const pieData = [
     { name: 'Needs', value: analytics.needsTotal, color: 'hsl(190, 65%, 50%)' },
