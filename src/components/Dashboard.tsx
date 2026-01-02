@@ -4,7 +4,7 @@ import { Transaction } from '@/lib/types';
 import { formatAmount } from '@/lib/parser';
 import { TrendingUp, TrendingDown, Wallet, Target, Calendar, CreditCard, PiggyBank, ArrowUpRight, ArrowDownRight, Flame, Award, Repeat, DollarSign, CalendarCheck, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, subMonths, subYears } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -23,6 +23,26 @@ const TIME_PERIOD_LABELS: Record<TimePeriod, string> = {
   allTime: 'All Time',
 };
 
+function getDateRangeForPeriod(period: TimePeriod): { start: Date | null; end: Date | null } {
+  const now = new Date();
+  switch (period) {
+    case 'thisMonth':
+      return { start: startOfMonth(now), end: endOfMonth(now) };
+    case 'lastMonth':
+      const lastMonth = subMonths(now, 1);
+      return { start: startOfMonth(lastMonth), end: endOfMonth(lastMonth) };
+    case 'thisYear':
+      return { start: startOfYear(now), end: endOfYear(now) };
+    case 'lastYear':
+      const lastYear = subYears(now, 1);
+      return { start: startOfYear(lastYear), end: endOfYear(lastYear) };
+    case 'allTime':
+      return { start: null, end: null };
+    default:
+      return { start: startOfMonth(now), end: endOfMonth(now) };
+  }
+}
+
 interface DashboardProps {
   transactions: Transaction[];
   currencySymbol: string;
@@ -31,18 +51,28 @@ interface DashboardProps {
 }
 
 export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMonth', onTimePeriodChange }: DashboardProps) {
+  // Filter transactions by selected time period
+  const filteredTransactions = useMemo(() => {
+    const { start, end } = getDateRangeForPeriod(timePeriod);
+    return transactions.filter(t => {
+      const txDate = new Date(t.date);
+      if (start && txDate < start) return false;
+      if (end && txDate > end) return false;
+      return true;
+    });
+  }, [transactions, timePeriod]);
+
   const analytics = useMemo(() => {
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    const startOfMonthDate = startOfMonth(now);
+    const startOfLastMonth = startOfMonth(subMonths(now, 1));
+    const endOfLastMonth = endOfMonth(subMonths(now, 1));
 
-    const thisMonth = transactions.filter(
-      (t) => new Date(t.date) >= startOfMonth && t.type === 'expense'
-    );
-    const thisMonthIncome = transactions.filter(
-      (t) => new Date(t.date) >= startOfMonth && t.type === 'income'
-    );
+    // Use filtered transactions for main stats
+    const periodExpenses = filteredTransactions.filter(t => t.type === 'expense');
+    const periodIncome = filteredTransactions.filter(t => t.type === 'income');
+
+    // For comparison, use previous period
     const lastMonth = transactions.filter(
       (t) => new Date(t.date) >= startOfLastMonth && new Date(t.date) <= endOfLastMonth && t.type === 'expense'
     );
@@ -50,29 +80,29 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
       (t) => new Date(t.date) >= startOfLastMonth && new Date(t.date) <= endOfLastMonth && t.type === 'income'
     );
 
-    const thisMonthTotal = thisMonth.reduce((sum, t) => sum + t.amount, 0);
+    const periodTotal = periodExpenses.reduce((sum, t) => sum + t.amount, 0);
     const lastMonthTotal = lastMonth.reduce((sum, t) => sum + t.amount, 0);
-    const thisMonthIncomeTotal = thisMonthIncome.reduce((sum, t) => sum + t.amount, 0);
+    const periodIncomeTotal = periodIncome.reduce((sum, t) => sum + t.amount, 0);
     const lastMonthIncomeTotal = lastMonthIncome.reduce((sum, t) => sum + t.amount, 0);
 
-    const needsTotal = thisMonth.filter((t) => t.necessity === 'need').reduce((sum, t) => sum + t.amount, 0);
-    const wantsTotal = thisMonth.filter((t) => t.necessity === 'want').reduce((sum, t) => sum + t.amount, 0);
-    const uncategorized = thisMonth.filter((t) => !t.necessity).reduce((sum, t) => sum + t.amount, 0);
+    const needsTotal = periodExpenses.filter((t) => t.necessity === 'need').reduce((sum, t) => sum + t.amount, 0);
+    const wantsTotal = periodExpenses.filter((t) => t.necessity === 'want').reduce((sum, t) => sum + t.amount, 0);
+    const uncategorized = periodExpenses.filter((t) => !t.necessity).reduce((sum, t) => sum + t.amount, 0);
 
-    // Savings this month
-    const savingsThisMonth = thisMonthIncomeTotal - thisMonthTotal;
+    // Savings for period
+    const savingsThisPeriod = periodIncomeTotal - periodTotal;
     const savingsLastMonth = lastMonthIncomeTotal - lastMonthTotal;
-    const savingsRate = thisMonthIncomeTotal > 0 ? (savingsThisMonth / thisMonthIncomeTotal) * 100 : 0;
+    const savingsRate = periodIncomeTotal > 0 ? (savingsThisPeriod / periodIncomeTotal) * 100 : 0;
 
     // By payment mode
     const byMode: Record<string, number> = {};
-    thisMonth.forEach((t) => {
+    periodExpenses.forEach((t) => {
       byMode[t.paymentMode] = (byMode[t.paymentMode] || 0) + t.amount;
     });
 
     // Top spending categories (by reason)
     const byReason: Record<string, number> = {};
-    thisMonth.forEach((t) => {
+    periodExpenses.forEach((t) => {
       const reason = t.reason || 'Other';
       byReason[reason] = (byReason[reason] || 0) + t.amount;
     });
@@ -87,10 +117,10 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateStr = date.toDateString();
-      const dayExpense = transactions
+      const dayExpense = filteredTransactions
         .filter((t) => new Date(t.date).toDateString() === dateStr && t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
-      const dayIncome = transactions
+      const dayIncome = filteredTransactions
         .filter((t) => new Date(t.date).toDateString() === dateStr && t.type === 'income')
         .reduce((sum, t) => sum + t.amount, 0);
       dailyData.push({
@@ -131,7 +161,7 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
       weekStart.setDate(weekStart.getDate() - weekStart.getDay() - (weeksAgo * 7));
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekEnd.getDate() + 6);
-      return transactions
+      return filteredTransactions
         .filter((t) => {
           const d = new Date(t.date);
           return d >= weekStart && d <= weekEnd && t.type === 'expense';
@@ -143,26 +173,30 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
     const lastWeekTotal = getWeekData(1);
     const weekChange = lastWeekTotal > 0 ? ((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100 : 0;
 
-    // Average daily spending
-    const avgDailySpending = thisMonth.length > 0 
-      ? thisMonthTotal / new Date().getDate()
+    // Average daily spending - use period days count
+    const { start: periodStart, end: periodEnd } = getDateRangeForPeriod(timePeriod);
+    const daysInPeriod = periodStart && periodEnd 
+      ? Math.ceil((Math.min(now.getTime(), periodEnd.getTime()) - periodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      : 1;
+    const avgDailySpending = periodExpenses.length > 0 
+      ? periodTotal / daysInPeriod
       : 0;
 
     // Transaction count
-    const transactionCount = thisMonth.length;
+    const transactionCount = periodExpenses.length;
 
     const percentChange = lastMonthTotal > 0 
-      ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100 
+      ? ((periodTotal - lastMonthTotal) / lastMonthTotal) * 100 
       : 0;
 
-    // Biggest expense this month
-    const biggestExpense = thisMonth.length > 0 
-      ? thisMonth.reduce((max, t) => t.amount > max.amount ? t : max, thisMonth[0])
+    // Biggest expense in period
+    const biggestExpense = periodExpenses.length > 0 
+      ? periodExpenses.reduce((max, t) => t.amount > max.amount ? t : max, periodExpenses[0])
       : null;
 
     // Most frequent category
     const frequencyByReason: Record<string, number> = {};
-    thisMonth.forEach(t => {
+    periodExpenses.forEach(t => {
       const reason = t.reason || 'Other';
       frequencyByReason[reason] = (frequencyByReason[reason] || 0) + 1;
     });
@@ -171,12 +205,12 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
 
     // Average transaction size
     const avgTransactionSize = transactionCount > 0 
-      ? thisMonthTotal / transactionCount 
+      ? periodTotal / transactionCount 
       : 0;
 
     // Days with spending
     const uniqueSpendingDays = new Set(
-      thisMonth.map(t => new Date(t.date).toDateString())
+      periodExpenses.map(t => new Date(t.date).toDateString())
     ).size;
 
     // Spending streak (consecutive days with expenses)
@@ -186,7 +220,7 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
       const checkDate = new Date(today);
       checkDate.setDate(checkDate.getDate() - i);
       const dateStr = checkDate.toDateString();
-      const hasExpense = transactions.some(
+      const hasExpense = filteredTransactions.some(
         t => new Date(t.date).toDateString() === dateStr && t.type === 'expense'
       );
       if (hasExpense) {
@@ -196,9 +230,9 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
       }
     }
 
-    // Best/worst spending day this month
+    // Best/worst spending day in period
     const dailyTotals: Record<string, number> = {};
-    thisMonth.forEach(t => {
+    periodExpenses.forEach(t => {
       const dateStr = new Date(t.date).toDateString();
       dailyTotals[dateStr] = (dailyTotals[dateStr] || 0) + t.amount;
     });
@@ -214,14 +248,14 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
     const needsWantsRatio = wantsTotal > 0 ? needsTotal / wantsTotal : needsTotal > 0 ? Infinity : 0;
 
     return {
-      thisMonthTotal,
+      periodTotal,
       lastMonthTotal,
-      thisMonthIncomeTotal,
+      periodIncomeTotal,
       percentChange,
       needsTotal,
       wantsTotal,
       uncategorized,
-      savingsThisMonth,
+      savingsThisPeriod,
       savingsRate,
       thisWeekTotal,
       lastWeekTotal,
@@ -298,7 +332,7 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
             <span className="text-xs uppercase tracking-wider">Spent</span>
           </div>
           <p className="text-xl font-bold font-mono text-expense">
-            {currencySymbol}{formatAmount(analytics.thisMonthTotal)}
+            {currencySymbol}{formatAmount(analytics.periodTotal)}
           </p>
           <div className={cn(
             "flex items-center gap-1 text-xs mt-1",
@@ -319,9 +353,9 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
             <span className="text-xs uppercase tracking-wider">Income</span>
           </div>
           <p className="text-xl font-bold font-mono text-income">
-            {currencySymbol}{formatAmount(analytics.thisMonthIncomeTotal)}
+            {currencySymbol}{formatAmount(analytics.periodIncomeTotal)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">This month</p>
+          <p className="text-xs text-muted-foreground mt-1">{TIME_PERIOD_LABELS[timePeriod]}</p>
         </div>
       </div>
 
@@ -334,9 +368,9 @@ export function Dashboard({ transactions, currencySymbol, timePeriod = 'thisMont
           </div>
           <p className={cn(
             "text-xl font-bold font-mono",
-            analytics.savingsThisMonth >= 0 ? 'text-income' : 'text-expense'
+            analytics.savingsThisPeriod >= 0 ? 'text-income' : 'text-expense'
           )}>
-            {analytics.savingsThisMonth >= 0 ? '+' : ''}{currencySymbol}{formatAmount(Math.abs(analytics.savingsThisMonth))}
+            {analytics.savingsThisPeriod >= 0 ? '+' : ''}{currencySymbol}{formatAmount(Math.abs(analytics.savingsThisPeriod))}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {analytics.savingsRate >= 0 ? analytics.savingsRate.toFixed(0) : 0}% savings rate
