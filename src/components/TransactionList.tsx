@@ -264,7 +264,8 @@ export function TransactionList({
     return regroupedTransactions.slice(0, visibleCount);
   }, [regroupedTransactions, visibleCount]);
 
-  const hasMore = visibleCount < regroupedTransactions.length;
+  // Check if there's more data to load - cap visibleCount to prevent infinite loading
+  const hasMore = regroupedTransactions.length > 0 && visibleCount < regroupedTransactions.length;
   const totalFilteredCount = filteredGroupedTransactions.reduce((sum, [, { transactions }]) => sum + transactions.length, 0);
 
   const toggleGroup = (key: string) => {
@@ -636,14 +637,16 @@ export function TransactionList({
           );
         })}
 
-        {/* Load More Trigger - always render ref for observer */}
-        <div ref={loadMoreRef} className="flex justify-center py-4">
-          {hasMore && (
+        {/* Load More Trigger - only render when there's more to load */}
+        {hasMore ? (
+          <div ref={loadMoreRef} className="flex justify-center py-4">
             <div className="text-xs text-muted-foreground animate-pulse">
               Loading more...
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="h-4" /> // Empty spacer when all loaded
+        )}
       </div>
 
       {/* Scroll to Top Button */}
