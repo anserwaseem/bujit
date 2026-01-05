@@ -52,7 +52,7 @@ export function getTransactions(): Transaction[] {
   }
 }
 
-export function saveTransactions(transactions: Transaction[]): void {
+function saveTransactions(transactions: Transaction[]): void {
   try {
     localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
   } catch (error) {

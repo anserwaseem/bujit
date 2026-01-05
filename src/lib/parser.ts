@@ -73,7 +73,7 @@ export function formatAmount(amount: number): string {
   }).format(amount);
 }
 
-export function formatDate(
+function formatDate(
   dateStr: string,
   includeYear: boolean = false
 ): string {
