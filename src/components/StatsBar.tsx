@@ -2,20 +2,6 @@ import { useState } from "react";
 import { formatAmount } from "@/lib/parser";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-type TimePeriod =
-  | "thisMonth"
-  | "lastMonth"
-  | "thisYear"
-  | "lastYear"
-  | "allTime";
 
 interface StatsBarProps {
   stats: {
@@ -27,24 +13,9 @@ interface StatsBarProps {
     transactionCount: number;
   };
   currencySymbol: string;
-  timePeriod?: TimePeriod;
-  onTimePeriodChange?: (period: TimePeriod) => void;
 }
 
-const TIME_PERIOD_LABELS: Record<TimePeriod, string> = {
-  thisMonth: "This Month",
-  lastMonth: "Last Month",
-  thisYear: "This Year",
-  lastYear: "Last Year",
-  allTime: "All Time",
-};
-
-export function StatsBar({
-  stats,
-  currencySymbol,
-  timePeriod = "thisMonth",
-  onTimePeriodChange,
-}: StatsBarProps) {
+export function StatsBar({ stats, currencySymbol }: StatsBarProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const needsPercent =
@@ -63,31 +34,6 @@ export function StatsBar({
       {/* Expanded Content */}
       {isExpanded && (
         <div className="space-y-4 pb-3">
-          {/* Time Period Dropdown */}
-          <div className="text-center">
-            {onTimePeriodChange ? (
-              <Select
-                value={timePeriod}
-                onValueChange={(v) => onTimePeriodChange(v as TimePeriod)}
-              >
-                <SelectTrigger className="w-auto mx-auto h-6 px-2 text-xs uppercase tracking-wider text-muted-foreground border-0 bg-transparent hover:bg-muted/50 focus:ring-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(TIME_PERIOD_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
-                {TIME_PERIOD_LABELS[timePeriod]}
-              </p>
-            )}
-          </div>
-
           {/* Balance */}
           <div className="text-center">
             <p

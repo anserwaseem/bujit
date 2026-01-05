@@ -8,7 +8,29 @@ import { Dashboard } from "@/components/Dashboard";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { EditTransactionDialog } from "@/components/EditTransactionDialog";
 import { PaymentMode } from "@/lib/types";
-import { BarChart3, List } from "lucide-react";
+import { BarChart3, List, Calendar, ChevronDown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type TimePeriod =
+  | "thisMonth"
+  | "lastMonth"
+  | "thisYear"
+  | "lastYear"
+  | "allTime";
+
+const TIME_PERIOD_LABELS: Record<TimePeriod, string> = {
+  thisMonth: "This Month",
+  lastMonth: "Last Month",
+  thisYear: "This Year",
+  lastYear: "Last Year",
+  allTime: "All Time",
+};
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -76,32 +98,52 @@ const Index = () => {
           onOpenSettings={() => setShowSettings(true)}
         />
 
-        {/* Tab Navigation */}
-        <div className="flex gap-1 p-1 bg-muted rounded-lg mb-6">
-          <button
-            onClick={() => setActiveTab("transactions")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
-              activeTab === "transactions"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
+        {/* Tab Navigation with Time Period */}
+        <div className="flex items-center gap-2 mb-6">
+          <div className="flex-1 flex gap-1 p-1 bg-muted rounded-lg">
+            <button
+              onClick={() => setActiveTab("transactions")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
+                activeTab === "transactions"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <List className="w-4 h-4" />
+              Transactions
+            </button>
+            <button
+              onClick={() => setActiveTab("dashboard")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
+                activeTab === "dashboard"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <BarChart3 className="w-4 h-4" />
+              Dashboard
+            </button>
+          </div>
+          
+          {/* Icon-only Time Period Dropdown */}
+          <Select
+            value={timePeriod}
+            onValueChange={(v) => setTimePeriod(v as TimePeriod)}
           >
-            <List className="w-4 h-4" />
-            Transactions
-          </button>
-          <button
-            onClick={() => setActiveTab("dashboard")}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
-              activeTab === "dashboard"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <BarChart3 className="w-4 h-4" />
-            Dashboard
-          </button>
+            <SelectTrigger className="w-auto h-10 px-2.5 bg-muted border-0 rounded-lg hover:bg-muted/80 focus:ring-0 gap-1">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="w-3 h-3 text-muted-foreground" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              {Object.entries(TIME_PERIOD_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {activeTab === "transactions" ? (
@@ -110,8 +152,6 @@ const Index = () => {
               <StatsBar
                 stats={stats}
                 currencySymbol={settings.currencySymbol}
-                timePeriod={timePeriod}
-                onTimePeriodChange={setTimePeriod}
               />
             </section>
 
@@ -153,7 +193,6 @@ const Index = () => {
             transactions={transactions}
             currencySymbol={settings.currencySymbol}
             timePeriod={timePeriod}
-            onTimePeriodChange={setTimePeriod}
           />
         )}
       </div>

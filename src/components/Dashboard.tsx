@@ -42,13 +42,6 @@ import {
   subMonths,
   subYears,
 } from "date-fns";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 type TimePeriod =
   | "thisMonth"
@@ -94,14 +87,12 @@ interface DashboardProps {
   transactions: Transaction[];
   currencySymbol: string;
   timePeriod?: TimePeriod;
-  onTimePeriodChange?: (period: TimePeriod) => void;
 }
 
 export function Dashboard({
   transactions,
   currencySymbol,
   timePeriod = "thisMonth",
-  onTimePeriodChange,
 }: DashboardProps) {
   // Filter transactions by selected time period
   const filteredTransactions = useMemo(() => {
@@ -410,30 +401,6 @@ export function Dashboard({
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Time Period Dropdown */}
-      <div className="text-center">
-        {onTimePeriodChange ? (
-          <Select
-            value={timePeriod}
-            onValueChange={(v) => onTimePeriodChange(v as TimePeriod)}
-          >
-            <SelectTrigger className="w-auto mx-auto h-8 px-3 text-sm font-medium border-0 bg-muted/50 hover:bg-muted focus:ring-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(TIME_PERIOD_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <p className="text-sm font-medium text-muted-foreground">
-            {TIME_PERIOD_LABELS[timePeriod]}
-          </p>
-        )}
-      </div>
 
       {/* Quick Stats Row */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
