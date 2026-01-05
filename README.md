@@ -5,6 +5,7 @@
 ## 🎯 The Problem
 
 Most budgeting apps are overwhelming:
+
 - Too many fields to fill
 - Steep learning curves
 - Friction that kills the habit
@@ -32,6 +33,7 @@ That's it. Type what you spent, how you paid, and the amount. Done in 3 seconds.
 ## ✨ Features
 
 ### Zero-Friction Entry
+
 - **Natural language input**: Type `Grocery CC 9500` instead of filling forms
 - **Smart auto-complete**: Suggestions based on your history as you type
 - **Amount presets**: Quick-tap your most common amounts
@@ -39,23 +41,27 @@ That's it. Type what you spent, how you paid, and the amount. Done in 3 seconds.
 - **Swipe-to-backdate**: Swipe the date pill to quickly log yesterday's expenses
 
 ### One-Tap Everything
+
 - **Long-press to repeat**: Hold the submit button to repeat your last transaction
 - **Double-tap to duplicate**: Double-tap any transaction to copy it for today
 - **Quick-add pills**: Your frequent expenses, one tap away
 - **Tap to categorize**: Single tap to toggle Need/Want classification
 
 ### Smart Learning
+
 - **Auto-learn necessity**: Bujit remembers how you categorize items
 - **Pattern recognition**: Suggests categories based on your 70%+ usage patterns
 - **Frequency-based presets**: Amount buttons adapt to your spending habits
 
 ### Visual Delight
+
 - **"Today: X transactions" counter**: Always know your daily activity
 - **Animated empty state**: Helpful tips that rotate to guide new users
 - **Smooth animations**: Every interaction feels polished
 - **Beautiful dark/light modes**: Easy on the eyes, day or night
 
 ### Powerful Dashboard
+
 - **Monthly overview**: Track expenses, income, needs vs wants
 - **Category breakdown**: See where your money goes
 - **AI-powered insights**: Chat with Gemini about your spending habits
@@ -73,6 +79,7 @@ That's it. Type what you spent, how you paid, and the amount. Done in 3 seconds.
 ## 📱 Progressive Web App
 
 Bujit is a PWA, meaning you can:
+
 - Install it on your home screen
 - Use it offline
 - Get native app-like experience
@@ -103,6 +110,7 @@ The natural language parser accepts flexible input:
 ```
 
 **Examples:**
+
 - `Coffee CC 150` - Coffee paid by Credit Card, Rs.150
 - `Lunch Cash 500` - Lunch paid by Cash, Rs.500
 - `Uber D 350` - Uber paid by Debit Card, Rs.350
@@ -143,6 +151,7 @@ Bujit helps you understand your spending habits with simple categorization:
 ## 🤖 AI Insights (Optional)
 
 Connect your Gemini API key in Settings to:
+
 - Ask questions about your spending
 - Get personalized budgeting advice
 - Analyze spending patterns

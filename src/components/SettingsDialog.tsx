@@ -318,13 +318,13 @@ export function SettingsDialog({
               </p>
 
               {/* Add new mode */}
-              <div className="flex gap-2">
+              <div className="flex sm:gap-2 gap-1">
                 <input
                   type="text"
                   value={newModeName}
                   onChange={(e) => setNewModeName(e.target.value)}
                   placeholder="Name (e.g., Credit Card)"
-                  className="flex-1 bg-input border border-border rounded-lg px-3 py-2 text-sm
+                  className="flex-1 bg-input border border-border rounded-lg sm:px-3 pl-2 sm:py-2 py-1 text-sm
                              focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 />
                 <input
@@ -332,7 +332,7 @@ export function SettingsDialog({
                   value={newModeShort}
                   onChange={(e) => setNewModeShort(e.target.value)}
                   placeholder="Code (JC)"
-                  className="w-24 bg-input border border-border rounded-lg px-3 py-2 text-sm uppercase
+                  className="w-24 bg-input border border-border rounded-lg sm:px-3 pl-2 sm:py-2 py-1 text-sm uppercase
                              focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                   maxLength={4}
                 />
@@ -340,7 +340,7 @@ export function SettingsDialog({
                   onClick={handleAddMode}
                   disabled={!newModeName.trim() || !newModeShort.trim()}
                   className={cn(
-                    "p-2 rounded-lg transition-colors",
+                    "sm:p-2 p-1 rounded-lg transition-colors ml-auto",
                     newModeName.trim() && newModeShort.trim()
                       ? "bg-primary text-primary-foreground hover:opacity-90"
                       : "bg-muted text-muted-foreground cursor-not-allowed"

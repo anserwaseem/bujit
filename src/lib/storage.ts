@@ -20,7 +20,7 @@ export function getTransactions(): Transaction[] {
   try {
     const data = localStorage.getItem(TRANSACTIONS_KEY);
     if (!data) return [];
-    
+
     const parsed = JSON.parse(data);
     // validate it's an array
     if (!Array.isArray(parsed)) {
@@ -28,7 +28,7 @@ export function getTransactions(): Transaction[] {
       saveTransactions([]);
       return [];
     }
-    
+
     // basic validation - filter out invalid entries
     return parsed.filter(
       (t): t is Transaction =>

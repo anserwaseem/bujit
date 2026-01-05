@@ -73,10 +73,7 @@ export function formatAmount(amount: number): string {
   }).format(amount);
 }
 
-function formatDate(
-  dateStr: string,
-  includeYear: boolean = false
-): string {
+function formatDate(dateStr: string, includeYear: boolean = false): string {
   const date = new Date(dateStr);
   const options: Intl.DateTimeFormatOptions = {
     weekday: "short",

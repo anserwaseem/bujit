@@ -52,13 +52,13 @@ export function useSpeechRecognition({
   useEffect(() => {
     const SpeechRecognitionAPI =
       (
-        window as unknown as {
+        window as Window & {
           SpeechRecognition?: SpeechRecognitionConstructor;
           webkitSpeechRecognition?: SpeechRecognitionConstructor;
         }
       ).SpeechRecognition ||
       (
-        window as unknown as {
+        window as Window & {
           webkitSpeechRecognition?: SpeechRecognitionConstructor;
         }
       ).webkitSpeechRecognition;
