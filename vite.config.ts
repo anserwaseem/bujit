@@ -9,6 +9,20 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  build: {
+    target: "esnext",
+    minify: "esbuild",
+    cssMinify: true,
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "chart-vendor": ["recharts"],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -26,9 +40,27 @@ export default defineConfig(({ mode }) => ({
         icons: [
           {
             src: "/logo.svg",
+            sizes: "192x192",
+            type: "image/svg+xml",
+            purpose: "any",
+          },
+          {
+            src: "/logo.svg",
+            sizes: "384x384",
+            type: "image/svg+xml",
+            purpose: "any",
+          },
+          {
+            src: "/logo.svg",
             sizes: "512x512",
             type: "image/svg+xml",
             purpose: "any",
+          },
+          {
+            src: "/logo.svg",
+            sizes: "192x192",
+            type: "image/svg+xml",
+            purpose: "maskable",
           },
           {
             src: "/logo.svg",
