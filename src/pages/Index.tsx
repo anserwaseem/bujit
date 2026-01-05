@@ -106,7 +106,7 @@ const Index = () => {
 
         {activeTab === "transactions" ? (
           <>
-            <section className="py-6 border-b border-border">
+            <section>
               <StatsBar
                 stats={stats}
                 currencySymbol={settings.currencySymbol}
@@ -115,7 +115,7 @@ const Index = () => {
               />
             </section>
 
-            <section className="py-6 border-b border-border">
+            <section className="py-6">
               <TransactionInput
                 paymentModes={paymentModes}
                 currencySymbol={settings.currencySymbol}
@@ -128,7 +128,7 @@ const Index = () => {
               />
             </section>
 
-            <section className="py-6">
+            <section className="pb-6">
               <TransactionList
                 groupedTransactions={groupedTransactions}
                 currencySymbol={settings.currencySymbol}

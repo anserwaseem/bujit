@@ -31,7 +31,6 @@ import {
   Repeat,
   DollarSign,
   CalendarCheck,
-  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -420,7 +419,6 @@ export function Dashboard({
           >
             <SelectTrigger className="w-auto mx-auto h-8 px-3 text-sm font-medium border-0 bg-muted/50 hover:bg-muted focus:ring-0">
               <SelectValue />
-              <ChevronDown className="w-4 h-4 ml-1 opacity-50" />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(TIME_PERIOD_LABELS).map(([value, label]) => (

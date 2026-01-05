@@ -72,7 +72,6 @@ export function StatsBar({
               >
                 <SelectTrigger className="w-auto mx-auto h-6 px-2 text-xs uppercase tracking-wider text-muted-foreground border-0 bg-transparent hover:bg-muted/50 focus:ring-0">
                   <SelectValue />
-                  <ChevronDown className="w-3 h-3 ml-1 opacity-50" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(TIME_PERIOD_LABELS).map(([value, label]) => (
