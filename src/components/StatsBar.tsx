@@ -30,7 +30,29 @@ export function StatsBar({ stats, currencySymbol }: StatsBarProps) {
   const balance = stats.totalIncome - stats.totalExpenses;
 
   return (
-    <div className="space-y-0">
+    <div className="flex flex-col gap-2">
+      {/* Divider with Toggle Button */}
+      <div className="relative flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border" />
+        </div>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="relative z-10 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all border border-border/50 hover:border-border bg-muted/50 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus:text-muted-foreground"
+        >
+          {isExpanded ? (
+            <>
+              <ChevronUp className="w-3 h-3" />
+              <span>Hide Stats</span>
+            </>
+          ) : (
+            <>
+              <ChevronDown className="w-3 h-3" />
+              <span>Show Stats</span>
+            </>
+          )}
+        </button>
+      </div>
       {/* Expanded Content */}
       {isExpanded && (
         <div className="space-y-4 pb-3">
@@ -116,29 +138,6 @@ export function StatsBar({ stats, currencySymbol }: StatsBarProps) {
           )}
         </div>
       )}
-
-      {/* Divider with Toggle Button */}
-      <div className="relative flex items-center justify-center">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="relative z-10 flex items-center gap-1.5 px-3 py-1 text-xs text-muted-foreground bg-background border border-border rounded-full hover:bg-muted hover:text-foreground transition-colors"
-        >
-          {isExpanded ? (
-            <>
-              <ChevronUp className="w-3 h-3" />
-              <span>Hide Stats</span>
-            </>
-          ) : (
-            <>
-              <ChevronDown className="w-3 h-3" />
-              <span>Show Stats</span>
-            </>
-          )}
-        </button>
-      </div>
     </div>
   );
 }

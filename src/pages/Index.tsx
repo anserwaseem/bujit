@@ -126,7 +126,7 @@ const Index = () => {
               Dashboard
             </button>
           </div>
-          
+
           {/* Icon-only Time Period Dropdown */}
           <Select
             value={timePeriod}
@@ -134,7 +134,6 @@ const Index = () => {
           >
             <SelectTrigger className="w-auto h-10 px-2.5 bg-muted border-0 rounded-lg hover:bg-muted/80 focus:ring-0 gap-1">
               <Calendar className="w-4 h-4 text-muted-foreground" />
-              <ChevronDown className="w-3 h-3 text-muted-foreground" />
             </SelectTrigger>
             <SelectContent align="end">
               {Object.entries(TIME_PERIOD_LABELS).map(([value, label]) => (

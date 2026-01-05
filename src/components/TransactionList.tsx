@@ -434,9 +434,10 @@ export function TransactionList({
           className={cn(
             "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
             "border border-border/50 hover:border-border",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             showFilters || hasActiveFilters
-              ? "bg-primary/10 text-primary border-primary/30"
-              : "bg-muted/50 text-muted-foreground hover:text-foreground"
+              ? "bg-primary/10 text-primary border-primary/30 focus:text-primary"
+              : "bg-muted/50 text-muted-foreground hover:text-foreground focus:text-muted-foreground"
           )}
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
