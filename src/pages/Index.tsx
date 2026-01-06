@@ -1,4 +1,10 @@
-import { useState, useMemo, useCallback, Activity } from "react";
+import {
+  useState,
+  useMemo,
+  useCallback,
+  Activity,
+  startTransition,
+} from "react";
 import { useBudgly } from "@/hooks/useBudgly";
 import { Header } from "@/components/Header";
 import { StatsBar } from "@/components/StatsBar";
@@ -57,6 +63,18 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<"transactions" | "dashboard">(
     "transactions"
   );
+
+  // handle tab change with native View Transition API for smooth animations
+  const handleTabChange = useCallback((tab: "transactions" | "dashboard") => {
+    const toggleTab = () => startTransition(() => setActiveTab(tab));
+    // use browser's native View Transition API if available
+    if (document.startViewTransition) {
+      document.startViewTransition(() => toggleTab());
+    } else {
+      // fallback to startTransition if View Transition API not supported
+      toggleTab();
+    }
+  }, []);
   const [showSettings, setShowSettings] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<
     (typeof transactions)[0] | null
@@ -102,7 +120,7 @@ const Index = () => {
         <div className="flex items-center gap-2 mb-6">
           <div className="flex-1 flex gap-1 p-1 bg-muted rounded-lg">
             <button
-              onClick={() => setActiveTab("transactions")}
+              onClick={() => handleTabChange("transactions")}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
                 activeTab === "transactions"
@@ -114,7 +132,7 @@ const Index = () => {
               Transactions
             </button>
             <button
-              onClick={() => setActiveTab("dashboard")}
+              onClick={() => handleTabChange("dashboard")}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
                 activeTab === "dashboard"
