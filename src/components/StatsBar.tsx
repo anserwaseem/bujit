@@ -32,26 +32,25 @@ export function StatsBar({ stats, currencySymbol }: StatsBarProps) {
   return (
     <div className="flex flex-col gap-2">
       {/* Divider with Toggle Button */}
-      <div className="relative flex items-center justify-center">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-border" />
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="relative z-10 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all border border-border/50 hover:border-border bg-muted/50 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus:text-muted-foreground"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border border-border/50 hover:border-border bg-muted/50 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus:text-muted-foreground"
         >
           {isExpanded ? (
             <>
-              <ChevronUp className="w-3 h-3" />
+              <ChevronUp className="w-3.5 h-3.5" />
               <span>Hide Stats</span>
             </>
           ) : (
             <>
-              <ChevronDown className="w-3 h-3" />
+              <ChevronDown className="w-3.5 h-3.5" />
               <span>Show Stats</span>
             </>
           )}
         </button>
+        <div className="flex-1 h-px bg-border" />
       </div>
       {/* Expanded Content */}
       {isExpanded && (
