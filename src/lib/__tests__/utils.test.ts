@@ -133,8 +133,60 @@ describe("utils", () => {
       // should create switch element
       expect(createElementSpy).toHaveBeenCalledWith("input");
 
-      // advance timers to complete the pattern
+      // advance timers to complete the pattern (error uses 50ms delays)
       vi.advanceTimersByTime(200);
+
+      // clean up
+      createElementSpy.mockRestore();
+      appendChildSpy.mockRestore();
+      vi.useRealTimers();
+      navigator.vibrate = originalVibrate;
+    });
+
+    it("should handle multiple toggles for warning pattern on iOS", () => {
+      const originalVibrate = navigator.vibrate;
+      const navigatorWithVibrate = navigator as {
+        vibrate?: typeof navigator.vibrate;
+      };
+      delete navigatorWithVibrate.vibrate;
+
+      vi.useFakeTimers();
+      const createElementSpy = vi.spyOn(document, "createElement");
+      const appendChildSpy = vi.spyOn(document.body, "appendChild");
+
+      haptic("warning");
+
+      // should create switch element
+      expect(createElementSpy).toHaveBeenCalledWith("input");
+
+      // advance timers to complete the pattern (warning uses 30ms delays, 2 toggles)
+      vi.advanceTimersByTime(100);
+
+      // clean up
+      createElementSpy.mockRestore();
+      appendChildSpy.mockRestore();
+      vi.useRealTimers();
+      navigator.vibrate = originalVibrate;
+    });
+
+    it("should handle multiple toggles for success pattern on iOS", () => {
+      const originalVibrate = navigator.vibrate;
+      const navigatorWithVibrate = navigator as {
+        vibrate?: typeof navigator.vibrate;
+      };
+      delete navigatorWithVibrate.vibrate;
+
+      vi.useFakeTimers();
+      const createElementSpy = vi.spyOn(document, "createElement");
+      const appendChildSpy = vi.spyOn(document.body, "appendChild");
+
+      haptic("success");
+
+      // should create switch element
+      expect(createElementSpy).toHaveBeenCalledWith("input");
+
+      // advance timers to complete the pattern (success uses 30ms delays, 2 toggles)
+      vi.advanceTimersByTime(100);
 
       // clean up
       createElementSpy.mockRestore();
@@ -158,6 +210,48 @@ describe("utils", () => {
       expect(() => haptic("light")).not.toThrow();
 
       global.document = originalDocument;
+      navigator.vibrate = originalVibrate;
+    });
+
+    it("should handle iOS fallback error in catch block", () => {
+      const originalVibrate = navigator.vibrate;
+      const navigatorWithVibrate = navigator as {
+        vibrate?: typeof navigator.vibrate;
+      };
+      delete navigatorWithVibrate.vibrate;
+
+      // mock document.createElement to throw an error
+      const originalCreateElement = document.createElement;
+      document.createElement = vi.fn(() => {
+        throw new Error("DOM manipulation failed");
+      });
+
+      // should not throw - catch block should handle it
+      expect(() => haptic("light")).not.toThrow();
+
+      // restore
+      document.createElement = originalCreateElement;
+      navigator.vibrate = originalVibrate;
+    });
+
+    it("should handle iOS fallback when appendChild fails", () => {
+      const originalVibrate = navigator.vibrate;
+      const navigatorWithVibrate = navigator as {
+        vibrate?: typeof navigator.vibrate;
+      };
+      delete navigatorWithVibrate.vibrate;
+
+      // mock document.body.appendChild to throw an error
+      const originalAppendChild = document.body.appendChild;
+      document.body.appendChild = vi.fn(() => {
+        throw new Error("appendChild failed");
+      });
+
+      // should not throw - catch block should handle it
+      expect(() => haptic("light")).not.toThrow();
+
+      // restore
+      document.body.appendChild = originalAppendChild;
       navigator.vibrate = originalVibrate;
     });
   });
