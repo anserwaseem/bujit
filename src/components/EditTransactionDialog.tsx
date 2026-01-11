@@ -162,7 +162,6 @@ export function EditTransactionDialog({
             <div className="relative">
               <input
                 type="text"
-                inputMode="decimal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="e.g., 100+50 or 150"
