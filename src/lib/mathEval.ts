@@ -33,6 +33,9 @@ export function evaluateMathExpression(expr: string): number | null {
     // Validate result
     if (typeof result !== "number" || !isFinite(result)) return null;
 
+    // Reject negative values
+    if (result <= 0) return null;
+
     // Round to avoid floating point issues (max 2 decimal places)
     return Math.round(result * 100) / 100;
   } catch {

@@ -12,6 +12,7 @@ import { format, subDays } from "date-fns";
 import { parseInput } from "@/lib/parser";
 import { PaymentMode, Transaction, NecessityType } from "@/lib/types";
 import { cn, haptic } from "@/lib/utils";
+import { hasOperators, formatEvaluatedAmount } from "@/lib/mathEval";
 import {
   Popover,
   PopoverContent,
@@ -469,6 +470,12 @@ export function TransactionInput({
                   ? `${currencySymbol}${parsed.amount.toLocaleString("en-PK")}`
                   : "—"}
               </p>
+              {/* Show math preview when expression contains operators */}
+              {parsed.amount && input.trim().split(/\s+/).pop() && hasOperators(input.trim().split(/\s+/).pop()!) && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  = {formatEvaluatedAmount(parsed.amount, currencySymbol)}
+                </p>
+              )}
             </div>
           </div>
 
