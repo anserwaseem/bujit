@@ -116,15 +116,75 @@ describe("parser", () => {
     it("should return invalid when amount is zero", () => {
       const result = parseInput("coffee 0", mockModes);
       expect(result.isValid).toBe(false);
-      expect(result.reason).toBe("coffee");
-      expect(result.amount).toBe(0);
+      expect(result.reason).toBe("coffee 0");
+      expect(result.amount).toBeNull();
     });
 
     it("should return invalid when amount is negative", () => {
       const result = parseInput("coffee -100", mockModes);
       expect(result.isValid).toBe(false);
-      expect(result.reason).toBe("coffee");
-      expect(result.amount).toBe(-100);
+      expect(result.reason).toBe("coffee -100");
+      expect(result.amount).toBeNull();
+    });
+
+    // Math expression tests
+    describe("math expressions", () => {
+      it("should parse simple addition in amount", () => {
+        const result = parseInput("coffee 100+50", mockModes);
+        expect(result.isValid).toBe(true);
+        expect(result.reason).toBe("coffee");
+        expect(result.amount).toBe(150);
+      });
+
+      it("should parse subtraction in amount", () => {
+        const result = parseInput("refund 200-50", mockModes);
+        expect(result.isValid).toBe(true);
+        expect(result.reason).toBe("refund");
+        expect(result.amount).toBe(150);
+      });
+
+      it("should parse multiplication in amount", () => {
+        const result = parseInput("tickets 50*3", mockModes);
+        expect(result.isValid).toBe(true);
+        expect(result.reason).toBe("tickets");
+        expect(result.amount).toBe(150);
+      });
+
+      it("should parse division in amount", () => {
+        const result = parseInput("split bill 300/2", mockModes);
+        expect(result.isValid).toBe(true);
+        expect(result.reason).toBe("split bill");
+        expect(result.amount).toBe(150);
+      });
+
+      it("should parse complex math expression with payment mode", () => {
+        const result = parseInput("groceries CC 100+50+25", mockModes);
+        expect(result.isValid).toBe(true);
+        expect(result.reason).toBe("groceries");
+        expect(result.paymentMode).toBe("Credit Card");
+        expect(result.amount).toBe(175);
+      });
+
+      it("should return invalid for math expression with negative result", () => {
+        const result = parseInput("expense 50-100", mockModes);
+        expect(result.isValid).toBe(false);
+        expect(result.reason).toBe("expense 50-100");
+        expect(result.amount).toBeNull();
+      });
+
+      it("should return invalid for math expression with zero result", () => {
+        const result = parseInput("expense 100-100", mockModes);
+        expect(result.isValid).toBe(false);
+        expect(result.reason).toBe("expense 100-100");
+        expect(result.amount).toBeNull();
+      });
+
+      it("should return invalid for division by zero", () => {
+        const result = parseInput("error 100/0", mockModes);
+        expect(result.isValid).toBe(false);
+        expect(result.reason).toBe("error 100/0");
+        expect(result.amount).toBeNull();
+      });
     });
 
     it("should handle empty reason after parsing", () => {
