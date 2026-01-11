@@ -1,6 +1,10 @@
 import { ParsedInput, PaymentMode } from "./types";
+import { evaluateMathExpression } from "./mathEval";
 
 const DEFAULT_MODE = "Cash";
+
+// Regex to detect math expressions (contains operators)
+const MATH_OPERATORS_REGEX = /[+\-*/]/;
 
 export function parseInput(input: string, modes: PaymentMode[]): ParsedInput {
   const trimmed = input.trim();
@@ -25,11 +29,20 @@ export function parseInput(input: string, modes: PaymentMode[]): ParsedInput {
     };
   }
 
-  // Last part should be the amount
+  // Last part should be the amount (could be a math expression like "100+50")
   const lastPart = parts[parts.length - 1];
-  const amount = parseFloat(lastPart.replace(/,/g, ""));
 
-  if (isNaN(amount)) {
+  let amount: number | null;
+
+  // Check if it's a math expression
+  if (MATH_OPERATORS_REGEX.test(lastPart)) {
+    amount = evaluateMathExpression(lastPart);
+  } else {
+    const parsed = parseFloat(lastPart.replace(/,/g, ""));
+    amount = isNaN(parsed) || parsed <= 0 ? null : parsed;
+  }
+
+  if (amount === null) {
     return {
       reason: trimmed,
       paymentMode: DEFAULT_MODE,
