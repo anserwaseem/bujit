@@ -31,6 +31,7 @@ import {
   Repeat,
   DollarSign,
   CalendarCheck,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -87,12 +88,14 @@ interface DashboardProps {
   transactions: Transaction[];
   currencySymbol: string;
   timePeriod?: TimePeriod;
+  onOpenReport?: () => void;
 }
 
 export function Dashboard({
   transactions,
   currencySymbol,
   timePeriod = "thisMonth",
+  onOpenReport,
 }: DashboardProps) {
   // Filter transactions by selected time period
   const filteredTransactions = useMemo(() => {
@@ -401,6 +404,17 @@ export function Dashboard({
 
   return (
     <div className="space-y-4 animate-fade-in">
+      {/* Spending Report Button */}
+      {onOpenReport && (
+        <button
+          onClick={onOpenReport}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary text-primary-foreground rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors shadow-sm"
+        >
+          <FileText className="w-4 h-4" />
+          Spending Report
+        </button>
+      )}
+
       {/* Quick Stats Row */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <div className="bg-card border border-border rounded-xl p-3 sm:p-4">

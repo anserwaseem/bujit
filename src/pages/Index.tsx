@@ -13,6 +13,7 @@ import { TransactionList } from "@/components/TransactionList";
 import { Dashboard } from "@/components/Dashboard";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { EditTransactionDialog } from "@/components/EditTransactionDialog";
+import { SpendingReportDialog } from "@/components/SpendingReportDialog";
 import { PaymentMode } from "@/lib/types";
 import { BarChart3, List, Calendar } from "lucide-react";
 import {
@@ -79,6 +80,7 @@ const Index = () => {
   const [editingTransaction, setEditingTransaction] = useState<
     (typeof transactions)[0] | null
   >(null);
+  const [showReport, setShowReport] = useState(false);
 
   // Today's transaction count
   const todayCount = useMemo(() => {
@@ -209,6 +211,7 @@ const Index = () => {
             transactions={transactions}
             currencySymbol={settings.currencySymbol}
             timePeriod={timePeriod}
+            onOpenReport={() => setShowReport(true)}
           />
         </Activity>
       </div>
@@ -239,6 +242,18 @@ const Index = () => {
           currencySymbol={settings.currencySymbol}
           onSave={updateTransaction}
           onClose={() => setEditingTransaction(null)}
+        />
+      )}
+
+      {showReport && (
+        <SpendingReportDialog
+          transactions={transactions}
+          currencySymbol={settings.currencySymbol}
+          isOpen={showReport}
+          onClose={() => setShowReport(false)}
+          onDelete={deleteTransaction}
+          onEdit={setEditingTransaction}
+          onUpdateNecessity={updateNecessity}
         />
       )}
     </div>
