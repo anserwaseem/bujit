@@ -33,38 +33,6 @@ import {
 } from "@/lib/storage";
 import { syncTransactionsToSheet } from "@/lib/googleSheets";
 
-export type TimePeriod =
-  | "thisMonth"
-  | "lastMonth"
-  | "thisYear"
-  | "lastYear"
-  | "allTime";
-
-function getDateRangeForPeriod(period: TimePeriod): {
-  start: Date | null;
-  end: Date | null;
-} {
-  const now = new Date();
-
-  switch (period) {
-    case "thisMonth":
-      return { start: startOfMonth(now), end: endOfMonth(now) };
-    case "lastMonth": {
-      const lastMonth = subMonths(now, 1);
-      return { start: startOfMonth(lastMonth), end: endOfMonth(lastMonth) };
-    }
-    case "thisYear":
-      return { start: startOfYear(now), end: endOfYear(now) };
-    case "lastYear": {
-      const lastYear = subYears(now, 1);
-      return { start: startOfYear(lastYear), end: endOfYear(lastYear) };
-    }
-    case "allTime":
-      return { start: null, end: null };
-    default:
-      return { start: startOfMonth(now), end: endOfMonth(now) };
-  }
-}
 
 const DEFAULT_MODES: PaymentMode[] = [
   { id: "1", name: "Debit Card", shorthand: "D" },
@@ -159,7 +127,6 @@ export function useBudgly() {
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
   const [settings, setSettings] = useState<AppSettings>(getInitialSettings);
 
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("thisMonth");
 
   // auto-sync debounce timer
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -267,30 +234,21 @@ export function useBudgly() {
     saveSettings(newSettings);
   }, []);
 
-  // Calculate stats based on time period
+  // Calculate stats from all transactions (filtering happens at higher level)
   const stats = useMemo(() => {
-    const { start, end } = getDateRangeForPeriod(timePeriod);
-
-    const filteredTransactions = transactions.filter((t) => {
-      const txDate = new Date(t.date);
-      if (start && txDate < start) return false;
-      if (end && txDate > end) return false;
-      return true;
-    });
-
-    const totalExpenses = filteredTransactions
+    const totalExpenses = transactions
       .filter((t) => t.type === "expense")
       .reduce((sum, t) => sum + t.amount, 0);
-    const totalIncome = filteredTransactions
+    const totalIncome = transactions
       .filter((t) => t.type === "income")
       .reduce((sum, t) => sum + t.amount, 0);
-    const needsTotal = filteredTransactions
+    const needsTotal = transactions
       .filter((t) => t.type === "expense" && t.necessity === "need")
       .reduce((sum, t) => sum + t.amount, 0);
-    const wantsTotal = filteredTransactions
+    const wantsTotal = transactions
       .filter((t) => t.type === "expense" && t.necessity === "want")
       .reduce((sum, t) => sum + t.amount, 0);
-    const uncategorized = filteredTransactions
+    const uncategorized = transactions
       .filter((t) => t.type === "expense" && t.necessity === null)
       .reduce((sum, t) => sum + t.amount, 0);
 
@@ -300,9 +258,9 @@ export function useBudgly() {
       needsTotal,
       wantsTotal,
       uncategorized,
-      transactionCount: filteredTransactions.length,
+      transactionCount: transactions.length,
     };
-  }, [transactions, timePeriod]);
+  }, [transactions]);
 
   // Group transactions by date with daily totals
   const groupedTransactions = useMemo(() => {
@@ -372,11 +330,9 @@ export function useBudgly() {
     theme,
     settings,
     stats,
-    timePeriod,
     groupedTransactions,
     quickAddSuggestions,
     toggleTheme,
-    setTimePeriod,
     addTransaction: handleAddTransaction,
     deleteTransaction: handleDeleteTransaction,
     updateNecessity: handleUpdateNecessity,

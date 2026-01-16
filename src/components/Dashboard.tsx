@@ -43,67 +43,14 @@ import {
   subYears,
 } from "date-fns";
 
-type TimePeriod =
-  | "thisMonth"
-  | "lastMonth"
-  | "thisYear"
-  | "lastYear"
-  | "allTime";
-
-const TIME_PERIOD_LABELS: Record<TimePeriod, string> = {
-  thisMonth: "This Month",
-  lastMonth: "Last Month",
-  thisYear: "This Year",
-  lastYear: "Last Year",
-  allTime: "All Time",
-};
-
-function getDateRangeForPeriod(period: TimePeriod): {
-  start: Date | null;
-  end: Date | null;
-} {
-  const now = new Date();
-  switch (period) {
-    case "thisMonth":
-      return { start: startOfMonth(now), end: endOfMonth(now) };
-    case "lastMonth": {
-      const lastMonth = subMonths(now, 1);
-      return { start: startOfMonth(lastMonth), end: endOfMonth(lastMonth) };
-    }
-    case "thisYear":
-      return { start: startOfYear(now), end: endOfYear(now) };
-    case "lastYear": {
-      const lastYear = subYears(now, 1);
-      return { start: startOfYear(lastYear), end: endOfYear(lastYear) };
-    }
-    case "allTime":
-      return { start: null, end: null };
-    default:
-      return { start: startOfMonth(now), end: endOfMonth(now) };
-  }
-}
-
 interface DashboardProps {
   transactions: Transaction[];
   currencySymbol: string;
-  timePeriod?: TimePeriod;
 }
 
-export function Dashboard({
-  transactions,
-  currencySymbol,
-  timePeriod = "thisMonth",
-}: DashboardProps) {
-  // Filter transactions by selected time period
-  const filteredTransactions = useMemo(() => {
-    const { start, end } = getDateRangeForPeriod(timePeriod);
-    return transactions.filter((t) => {
-      const txDate = new Date(t.date);
-      if (start && txDate < start) return false;
-      if (end && txDate > end) return false;
-      return true;
-    });
-  }, [transactions, timePeriod]);
+export function Dashboard({ transactions, currencySymbol }: DashboardProps) {
+  // Transactions are already filtered by the parent component
+  const filteredTransactions = transactions;
 
   const analytics = useMemo(() => {
     const now = new Date();
@@ -255,17 +202,22 @@ export function Dashboard({
         ? ((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100
         : 0;
 
-    // Average daily spending - use period days count
-    const { start: periodStart, end: periodEnd } =
-      getDateRangeForPeriod(timePeriod);
-    const daysInPeriod =
-      periodStart && periodEnd
-        ? Math.ceil(
-            (Math.min(now.getTime(), periodEnd.getTime()) -
-              periodStart.getTime()) /
-              (1000 * 60 * 60 * 24)
-          ) + 1
-        : 1;
+    // Average daily spending - calculate from filtered transactions date range
+    const transactionDates = filteredTransactions.map((t) => new Date(t.date));
+    const minDate =
+      transactionDates.length > 0
+        ? new Date(Math.min(...transactionDates.map((d) => d.getTime())))
+        : now;
+    const maxDate =
+      transactionDates.length > 0
+        ? new Date(Math.max(...transactionDates.map((d) => d.getTime())))
+        : now;
+    const daysInPeriod = Math.max(
+      1,
+      Math.ceil(
+        (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1
+    );
     const avgDailySpending =
       periodExpenses.length > 0 ? periodTotal / daysInPeriod : 0;
 
@@ -371,7 +323,7 @@ export function Dashboard({
       worstDay,
       needsWantsRatio,
     };
-  }, [filteredTransactions, transactions, timePeriod]);
+  }, [filteredTransactions, transactions]);
 
   const pieData = [
     { name: "Needs", value: analytics.needsTotal, color: "hsl(190, 65%, 50%)" },
@@ -443,7 +395,7 @@ export function Dashboard({
             {formatAmount(analytics.periodIncomeTotal)}
           </p>
           <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 truncate">
-            {TIME_PERIOD_LABELS[timePeriod]}
+            Filtered results
           </p>
         </div>
       </div>
