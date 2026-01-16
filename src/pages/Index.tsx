@@ -6,53 +6,30 @@ import {
   startTransition,
 } from "react";
 import { useBudgly } from "@/hooks/useBudgly";
+import { FilterProvider, useFilters } from "@/hooks/useFilters.tsx";
 import { Header } from "@/components/Header";
 import { StatsBar } from "@/components/StatsBar";
 import { TransactionInput } from "@/components/TransactionInput";
 import { TransactionList } from "@/components/TransactionList";
 import { Dashboard } from "@/components/Dashboard";
+import { FilterButton, FilterContent } from "@/components/FilterPanel";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { EditTransactionDialog } from "@/components/EditTransactionDialog";
-import { SpendingReportDialog } from "@/components/SpendingReportDialog";
-import { PaymentMode } from "@/lib/types";
-import { BarChart3, List, Calendar } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-type TimePeriod =
-  | "thisMonth"
-  | "lastMonth"
-  | "thisYear"
-  | "lastYear"
-  | "allTime";
-
-const TIME_PERIOD_LABELS: Record<TimePeriod, string> = {
-  thisMonth: "This Month",
-  lastMonth: "Last Month",
-  thisYear: "This Year",
-  lastYear: "Last Year",
-  allTime: "All Time",
-};
+import { PaymentMode, Transaction } from "@/lib/types";
+import { BarChart3, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
-const Index = () => {
+const IndexContent = () => {
   const {
     transactions,
     paymentModes,
     theme,
     settings,
     stats,
-    timePeriod,
     groupedTransactions,
     quickAddSuggestions,
     toggleTheme,
-    setTimePeriod,
     addTransaction,
     deleteTransaction,
     updateNecessity,
@@ -61,9 +38,12 @@ const Index = () => {
     updateSettings,
   } = useBudgly();
 
+  const { getFilteredTransactions } = useFilters();
+
   const [activeTab, setActiveTab] = useState<"transactions" | "dashboard">(
     "transactions"
   );
+  const [showFilters, setShowFilters] = useState(false);
 
   // handle tab change with native View Transition API for smooth animations
   const handleTabChange = useCallback((tab: "transactions" | "dashboard") => {
@@ -80,7 +60,60 @@ const Index = () => {
   const [editingTransaction, setEditingTransaction] = useState<
     (typeof transactions)[0] | null
   >(null);
-  const [showReport, setShowReport] = useState(false);
+
+  // Get filtered transactions based on active filters
+  const filteredTransactions = useMemo(() => {
+    return getFilteredTransactions(transactions);
+  }, [transactions, getFilteredTransactions]);
+
+  // Calculate stats from filtered transactions
+  const filteredStats = useMemo(() => {
+    const totalExpenses = filteredTransactions
+      .filter((t) => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = filteredTransactions
+      .filter((t) => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const needsTotal = filteredTransactions
+      .filter((t) => t.type === "expense" && t.necessity === "need")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const wantsTotal = filteredTransactions
+      .filter((t) => t.type === "expense" && t.necessity === "want")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const uncategorized = filteredTransactions
+      .filter((t) => t.type === "expense" && t.necessity === null)
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return {
+      totalExpenses,
+      totalIncome,
+      needsTotal,
+      wantsTotal,
+      uncategorized,
+      transactionCount: filteredTransactions.length,
+    };
+  }, [filteredTransactions]);
+
+  // Group filtered transactions by date for TransactionList
+  const groupedFilteredTransactions = useMemo(() => {
+    const groups: Record<
+      string,
+      { transactions: Transaction[]; dayTotal: number }
+    > = {};
+    filteredTransactions.forEach((t) => {
+      const dateKey = new Date(t.date).toDateString();
+      if (!groups[dateKey]) {
+        groups[dateKey] = { transactions: [], dayTotal: 0 };
+      }
+      groups[dateKey].transactions.push(t);
+      if (t.type === "expense") {
+        groups[dateKey].dayTotal += t.amount;
+      }
+    });
+    return Object.entries(groups).sort(
+      ([a], [b]) => new Date(b).getTime() - new Date(a).getTime()
+    );
+  }, [filteredTransactions]);
 
   // Today's transaction count
   const todayCount = useMemo(() => {
@@ -118,57 +151,51 @@ const Index = () => {
           onOpenSettings={() => setShowSettings(true)}
         />
 
-        {/* Tab Navigation with Time Period */}
-        <div className="flex items-center gap-2 mb-6">
-          <div className="flex-1 flex gap-1 p-1 bg-muted rounded-lg">
-            <button
-              onClick={() => handleTabChange("transactions")}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
-                activeTab === "transactions"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <List className="w-4 h-4" />
-              Transactions
-            </button>
-            <button
-              onClick={() => handleTabChange("dashboard")}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
-                activeTab === "dashboard"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <BarChart3 className="w-4 h-4" />
-              Dashboard
-            </button>
+        {/* Tab Navigation with Filters */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex gap-1 p-1 bg-muted rounded-lg">
+              <button
+                onClick={() => handleTabChange("transactions")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
+                  activeTab === "transactions"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <List className="w-4 h-4" />
+                Transactions
+              </button>
+              <button
+                onClick={() => handleTabChange("dashboard")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors",
+                  activeTab === "dashboard"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <BarChart3 className="w-4 h-4" />
+                Dashboard
+              </button>
+            </div>
+
+            {/* Filters Icon Button */}
+            <FilterButton onClick={() => setShowFilters(!showFilters)} />
           </div>
 
-          {/* Icon-only Time Period Dropdown */}
-          <Select
-            value={timePeriod}
-            onValueChange={(v) => setTimePeriod(v as TimePeriod)}
-          >
-            <SelectTrigger className="w-auto h-10 px-2.5 bg-muted border-0 rounded-lg hover:bg-muted/80 focus:ring-0 gap-1">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-            </SelectTrigger>
-            <SelectContent align="end">
-              {Object.entries(TIME_PERIOD_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Filters Panel - Inline below tabs */}
+          <FilterContent isOpen={showFilters} />
         </div>
 
         {/* Transactions view with Activity for state preservation */}
         <Activity mode={activeTab === "transactions" ? "visible" : "hidden"}>
           <section>
-            <StatsBar stats={stats} currencySymbol={settings.currencySymbol} />
+            <StatsBar
+              stats={filteredStats}
+              currencySymbol={settings.currencySymbol}
+            />
           </section>
 
           <section className="py-6">
@@ -186,7 +213,7 @@ const Index = () => {
 
           <section className="pb-6">
             <TransactionList
-              groupedTransactions={groupedTransactions}
+              groupedTransactions={groupedFilteredTransactions}
               currencySymbol={settings.currencySymbol}
               onDelete={deleteTransaction}
               onEdit={setEditingTransaction}
@@ -208,10 +235,8 @@ const Index = () => {
         {/* Dashboard view with Activity for state preservation */}
         <Activity mode={activeTab === "dashboard" ? "visible" : "hidden"}>
           <Dashboard
-            transactions={transactions}
+            transactions={filteredTransactions}
             currencySymbol={settings.currencySymbol}
-            timePeriod={timePeriod}
-            onOpenReport={() => setShowReport(true)}
           />
         </Activity>
       </div>
@@ -244,19 +269,15 @@ const Index = () => {
           onClose={() => setEditingTransaction(null)}
         />
       )}
-
-      {showReport && (
-        <SpendingReportDialog
-          transactions={transactions}
-          currencySymbol={settings.currencySymbol}
-          isOpen={showReport}
-          onClose={() => setShowReport(false)}
-          onDelete={deleteTransaction}
-          onEdit={setEditingTransaction}
-          onUpdateNecessity={updateNecessity}
-        />
-      )}
     </div>
+  );
+};
+
+const Index = () => {
+  return (
+    <FilterProvider>
+      <IndexContent />
+    </FilterProvider>
   );
 };
 
