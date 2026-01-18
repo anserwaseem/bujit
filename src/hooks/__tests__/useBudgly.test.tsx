@@ -27,7 +27,6 @@ describe("useBudgly", () => {
       expect(result.current.theme).toBe("dark");
       expect(result.current.settings.currency).toBe("PKR");
       expect(result.current.settings.currencySymbol).toBe("Rs.");
-      expect(result.current.timePeriod).toBe("thisMonth");
     });
 
     it("should load transactions from storage on mount", () => {
@@ -410,7 +409,7 @@ describe("useBudgly", () => {
       vi.useFakeTimers();
     });
 
-    it("should calculate stats for thisMonth period with proper date filtering", () => {
+    it("should calculate stats for all transactions (no date filtering)", () => {
       // set fixed date: 2024-06-15 (mid-month)
       const fixedDate = new Date("2024-06-15T12:00:00.000Z");
       vi.setSystemTime(fixedDate);
@@ -461,15 +460,16 @@ describe("useBudgly", () => {
 
       const { result } = renderHook(() => useBudgly());
 
-      expect(result.current.stats.totalExpenses).toBe(300);
+      // Stats now include ALL transactions (filtering is done in useFilters)
+      expect(result.current.stats.totalExpenses).toBe(350); // 100 + 200 + 50
       expect(result.current.stats.totalIncome).toBe(5000);
       expect(result.current.stats.needsTotal).toBe(100);
       expect(result.current.stats.wantsTotal).toBe(200);
-      expect(result.current.stats.uncategorized).toBe(0);
-      expect(result.current.stats.transactionCount).toBe(3); // only this month
+      expect(result.current.stats.uncategorized).toBe(50); // from lastMonth transaction
+      expect(result.current.stats.transactionCount).toBe(4); // all transactions
     });
 
-    it("should calculate stats for lastMonth period", () => {
+    it("should calculate stats for all transactions regardless of date", () => {
       const fixedDate = new Date("2024-06-15T12:00:00.000Z");
       vi.setSystemTime(fixedDate);
 
@@ -501,12 +501,9 @@ describe("useBudgly", () => {
 
       const { result } = renderHook(() => useBudgly());
 
-      act(() => {
-        result.current.setTimePeriod("lastMonth");
-      });
-
-      expect(result.current.stats.totalExpenses).toBe(200);
-      expect(result.current.stats.transactionCount).toBe(1);
+      // Stats include ALL transactions (date filtering is now in useFilters)
+      expect(result.current.stats.totalExpenses).toBe(300); // 100 + 200
+      expect(result.current.stats.transactionCount).toBe(2); // both transactions
     });
 
     it("should calculate stats for allTime period", () => {
@@ -551,11 +548,8 @@ describe("useBudgly", () => {
 
       const { result } = renderHook(() => useBudgly());
 
-      act(() => {
-        result.current.setTimePeriod("allTime");
-      });
-
-      expect(result.current.stats.totalExpenses).toBe(350);
+      // Stats include ALL transactions (date filtering is now in useFilters)
+      expect(result.current.stats.totalExpenses).toBe(350); // 100 + 200 + 50
       expect(result.current.stats.transactionCount).toBe(3);
     });
 
@@ -611,20 +605,6 @@ describe("useBudgly", () => {
       const { result } = renderHook(() => useBudgly());
 
       expect(result.current.stats.uncategorized).toBe(150);
-    });
-  });
-
-  describe("time period", () => {
-    it("should change time period and update stats", () => {
-      const { result } = renderHook(() => useBudgly());
-
-      expect(result.current.timePeriod).toBe("thisMonth");
-
-      act(() => {
-        result.current.setTimePeriod("allTime");
-      });
-
-      expect(result.current.timePeriod).toBe("allTime");
     });
   });
 
