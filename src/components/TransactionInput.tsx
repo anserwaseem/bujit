@@ -32,6 +32,8 @@ interface TransactionInputProps {
   onAdd: (transaction: Omit<Transaction, "id">) => void;
   onRepeatLast?: () => void;
   lastTransaction?: Transaction | null;
+  initialInput?: string;
+  autoFocus?: boolean;
 }
 
 export function TransactionInput({
@@ -42,8 +44,10 @@ export function TransactionInput({
   onAdd,
   onRepeatLast,
   lastTransaction,
+  initialInput = "",
+  autoFocus = false,
 }: TransactionInputProps) {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialInput);
   const [isIncome, setIsIncome] = useState(false);
   const [selectedNecessity, setSelectedNecessity] =
     useState<NecessityType>(null);
@@ -55,6 +59,37 @@ export function TransactionInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const dateSwipeRef = useRef<HTMLButtonElement>(null);
   const touchStartX = useRef<number>(0);
+
+  // Handle initial input and auto-focus
+  useEffect(() => {
+    if (initialInput && initialInput !== input) {
+      setInput(initialInput);
+    }
+  }, [initialInput, input]);
+
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [autoFocus]);
+
+  // Handle initial input and auto-focus
+  useEffect(() => {
+    if (initialInput && initialInput !== input) {
+      setInput(initialInput);
+    }
+  }, [initialInput, input]);
+
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      // Small delay to ensure component is mounted
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [autoFocus]);
 
   const { isListening, isSupported, toggleListening } = useSpeechRecognition({
     onResult: (transcript) => {

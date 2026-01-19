@@ -2,6 +2,7 @@ import {
   useState,
   useMemo,
   useCallback,
+  useEffect,
   Activity,
   startTransition,
 } from "react";
@@ -18,6 +19,8 @@ import { EditTransactionDialog } from "@/components/EditTransactionDialog";
 import { PaymentMode, Transaction } from "@/lib/types";
 import { BarChart3, List } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseInput } from "@/lib/parser";
+import { useToast } from "@/hooks/use-toast";
 
 const IndexContent = () => {
   const {
@@ -42,6 +45,8 @@ const IndexContent = () => {
     "transactions"
   );
   const [showFilters, setShowFilters] = useState(false);
+  const [sharedInput, setSharedInput] = useState<string>("");
+  const { toast } = useToast();
 
   // handle tab change with native View Transition API for smooth animations
   const handleTabChange = useCallback((tab: "transactions" | "dashboard") => {
@@ -132,6 +137,59 @@ const IndexContent = () => {
     }
   }, [lastTransaction, addTransaction]);
 
+  // Handle URL query parameters (for shortcuts) and shared content
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get("action");
+    const sharedText = urlParams.get("text") || urlParams.get("title") || "";
+
+    // Handle shortcut actions
+    if (action === "dashboard") {
+      handleTabChange("dashboard");
+      // Clean up URL
+      window.history.replaceState({}, "", "/");
+    } else if (action === "add-expense") {
+      handleTabChange("transactions");
+      setSharedInput("");
+      // Clean up URL
+      window.history.replaceState({}, "", "/");
+    }
+
+    // Handle shared content
+    if (sharedText) {
+      // Normalize shared text: remove currency symbols, normalize whitespace
+      let normalized = sharedText
+        .trim()
+        .replace(/[$₹€£]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      // If it's just a number, prepend "Shared" so parseInput can handle it
+      if (/^\d+(?:[.,]\d+)?$/.test(normalized)) {
+        normalized = `Shared ${normalized}`;
+      }
+
+      // Check if it parses (using same parser as TransactionInput)
+      const parsed = parseInput(normalized, paymentModes);
+      if (parsed && parsed.isValid) {
+        setSharedInput(normalized);
+        toast({
+          title: "Shared content ready",
+          description: `Pre-filled: ${parsed.reason} ${parsed.paymentMode} ${parsed.amount}`,
+        });
+      } else {
+        // Still show the normalized text even if parsing fails
+        setSharedInput(normalized);
+        toast({
+          title: "Shared content received",
+          description: "You can edit the text before adding",
+        });
+      }
+      // Clean up URL
+      window.history.replaceState({}, "", "/");
+    }
+  }, [paymentModes, handleTabChange, toast]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-lg mx-auto px-4 pb-24">
@@ -197,6 +255,8 @@ const IndexContent = () => {
               onAdd={addTransaction}
               onRepeatLast={handleRepeatLast}
               lastTransaction={lastTransaction}
+              initialInput={sharedInput}
+              autoFocus={!!sharedInput}
             />
           </section>
 

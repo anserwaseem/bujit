@@ -214,5 +214,41 @@ function getPwaManifest() {
         label: "Bujit mobile home screen",
       },
     ],
+    shortcuts: [
+      {
+        name: "Quick Add Expense",
+        short_name: "Add Expense",
+        description: "Quickly add an expense transaction",
+        url: "/?action=add-expense",
+        icons: [
+          {
+            src: "/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+        ],
+      },
+      {
+        name: "View Dashboard",
+        short_name: "Dashboard",
+        description: "View spending dashboard and analytics",
+        url: "/?action=dashboard",
+        icons: [
+          {
+            src: "/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+        ],
+      },
+    ],
+    share_target: {
+      action: "/",
+      method: "GET" as const,
+      params: {
+        title: "text",
+        text: "text",
+      },
+    },
   };
 }
