@@ -185,6 +185,7 @@ const IndexContent = () => {
             <StatsBar
               stats={filteredStats}
               currencySymbol={settings.currencySymbol}
+              settings={settings}
             />
           </section>
 
@@ -204,6 +205,7 @@ const IndexContent = () => {
             <TransactionList
               groupedTransactions={groupedFilteredTransactions}
               currencySymbol={settings.currencySymbol}
+              settings={settings}
               onDelete={deleteTransaction}
               onEdit={setEditingTransaction}
               onUpdateNecessity={updateNecessity}
@@ -226,6 +228,7 @@ const IndexContent = () => {
           <Dashboard
             transactions={filteredTransactions}
             currencySymbol={settings.currencySymbol}
+            settings={settings}
             streakData={streakData}
           />
         </Activity>

@@ -1,4 +1,4 @@
-import { Transaction, NecessityType } from "@/lib/types";
+import { Transaction, NecessityType, AppSettings } from "@/lib/types";
 import { TransactionCard } from "./TransactionCard";
 import { getRelativeDate } from "@/lib/parser";
 import {
@@ -26,6 +26,7 @@ import { format } from "date-fns";
 interface TransactionListProps {
   groupedTransactions: [string, { transactions: Transaction[] }][];
   currencySymbol: string;
+  settings: AppSettings;
   onDelete: (id: string) => void;
   onEdit: (transaction: Transaction) => void;
   onUpdateNecessity: (id: string, necessity: NecessityType) => void;
@@ -46,6 +47,7 @@ const ITEMS_PER_PAGE = 20;
 export function TransactionList({
   groupedTransactions,
   currencySymbol,
+  settings,
   onDelete,
   onEdit,
   onUpdateNecessity,
@@ -376,6 +378,7 @@ export function TransactionList({
                       <TransactionCard
                         transaction={transaction}
                         currencySymbol={currencySymbol}
+                        settings={settings}
                         onDelete={onDelete}
                         onEdit={onEdit}
                         onUpdateNecessity={onUpdateNecessity}

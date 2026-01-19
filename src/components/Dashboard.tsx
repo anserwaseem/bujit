@@ -35,19 +35,32 @@ import {
 import { cn } from "@/lib/utils";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
+import { AppSettings } from "@/lib/types";
+import { formatMaskedAmount, maskReason } from "@/lib/privacy";
+
 interface DashboardProps {
   transactions: Transaction[];
   currencySymbol: string;
+  settings: AppSettings;
   streakData?: StreakData;
 }
 
 export function Dashboard({
   transactions,
   currencySymbol,
+  settings,
   streakData,
 }: DashboardProps) {
   // Transactions are already filtered by the parent component
   const filteredTransactions = transactions;
+
+  // Helper to format amounts with privacy mode
+  const formatAmountWithPrivacy = (amount: number): string => {
+    if (settings.privacyMode?.hideAmounts) {
+      return formatMaskedAmount(amount, settings, currencySymbol);
+    }
+    return `${currencySymbol}${formatAmount(amount)}`;
+  };
 
   const analytics = useMemo(() => {
     const now = new Date();
@@ -348,8 +361,7 @@ export function Dashboard({
             </span>
           </div>
           <p className="text-base sm:text-xl font-bold font-mono text-expense truncate">
-            {currencySymbol}
-            {formatAmount(analytics.periodTotal)}
+            {formatAmountWithPrivacy(analytics.periodTotal)}
           </p>
           <div
             className={cn(
@@ -376,8 +388,7 @@ export function Dashboard({
             </span>
           </div>
           <p className="text-base sm:text-xl font-bold font-mono text-income truncate">
-            {currencySymbol}
-            {formatAmount(analytics.periodIncomeTotal)}
+            {formatAmountWithPrivacy(analytics.periodIncomeTotal)}
           </p>
           <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 truncate">
             Filtered results
@@ -401,8 +412,7 @@ export function Dashboard({
             )}
           >
             {analytics.savingsThisPeriod >= 0 ? "+" : ""}
-            {currencySymbol}
-            {formatAmount(Math.abs(analytics.savingsThisPeriod))}
+            {formatAmountWithPrivacy(Math.abs(analytics.savingsThisPeriod))}
           </p>
           <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
             {analytics.savingsRate >= 0 ? analytics.savingsRate.toFixed(0) : 0}%
@@ -418,8 +428,7 @@ export function Dashboard({
             </span>
           </div>
           <p className="text-base sm:text-xl font-bold font-mono text-foreground truncate">
-            {currencySymbol}
-            {formatAmount(analytics.thisWeekTotal)}
+            {formatAmountWithPrivacy(analytics.thisWeekTotal)}
           </p>
           <div
             className={cn(
@@ -449,8 +458,7 @@ export function Dashboard({
             </span>
           </div>
           <p className="text-base sm:text-xl font-bold font-mono text-foreground truncate">
-            {currencySymbol}
-            {formatAmount(analytics.avgDailySpending)}
+            {formatAmountWithPrivacy(analytics.avgDailySpending)}
           </p>
           <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
             Per day this month
@@ -523,8 +531,7 @@ export function Dashboard({
             </span>
           </div>
           <p className="text-base sm:text-xl font-bold font-mono text-foreground truncate">
-            {currencySymbol}
-            {formatAmount(analytics.avgTransactionSize)}
+            {formatAmountWithPrivacy(analytics.avgTransactionSize)}
           </p>
           <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
             Per transaction
@@ -560,7 +567,7 @@ export function Dashboard({
               </span>
             </div>
             <p className="text-sm sm:text-lg font-bold text-foreground capitalize truncate">
-              {analytics.mostFrequentCategory[0]}
+              {maskReason(analytics.mostFrequentCategory[0], settings)}
             </p>
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {analytics.mostFrequentCategory[1]} times this month
@@ -580,11 +587,13 @@ export function Dashboard({
           </div>
           <div className="flex items-center justify-between gap-2">
             <p className="font-medium capitalize truncate text-sm sm:text-base flex-1">
-              {analytics.biggestExpense.reason || "Unknown"}
+              {maskReason(
+                analytics.biggestExpense.reason || "Unknown",
+                settings
+              )}
             </p>
             <p className="text-sm sm:text-lg font-bold font-mono text-expense flex-shrink-0">
-              {currencySymbol}
-              {formatAmount(analytics.biggestExpense.amount)}
+              {formatAmountWithPrivacy(analytics.biggestExpense.amount)}
             </p>
           </div>
           <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
@@ -604,8 +613,7 @@ export function Dashboard({
                 Best Day
               </p>
               <p className="font-mono font-bold text-income text-sm sm:text-base truncate">
-                {currencySymbol}
-                {formatAmount(analytics.bestDay[1])}
+                {formatAmountWithPrivacy(analytics.bestDay[1])}
               </p>
               <p className="text-[10px] sm:text-xs text-muted-foreground">
                 {format(new Date(analytics.bestDay[0]), "MMM d")}
@@ -616,8 +624,7 @@ export function Dashboard({
                 Worst Day
               </p>
               <p className="font-mono font-bold text-expense text-sm sm:text-base truncate">
-                {currencySymbol}
-                {formatAmount(analytics.worstDay[1])}
+                {formatAmountWithPrivacy(analytics.worstDay[1])}
               </p>
               <p className="text-[10px] sm:text-xs text-muted-foreground">
                 {format(new Date(analytics.worstDay[0]), "MMM d")}
@@ -649,7 +656,9 @@ export function Dashboard({
                   fontSize: "11px",
                 }}
                 formatter={(value: number, name: string) => [
-                  `${currencySymbol}${formatAmount(value)}`,
+                  settings.privacyMode?.hideAmounts
+                    ? formatMaskedAmount(value, settings, currencySymbol)
+                    : `${currencySymbol}${formatAmount(value)}`,
                   name === "expense" ? "Spent" : "Earned",
                 ]}
               />
@@ -698,11 +707,10 @@ export function Dashboard({
                 <div key={cat.name}>
                   <div className="flex items-center justify-between mb-1 gap-2">
                     <span className="text-xs sm:text-sm font-medium capitalize truncate flex-1">
-                      {cat.name}
+                      {maskReason(cat.name, settings)}
                     </span>
                     <span className="font-mono text-xs sm:text-sm text-muted-foreground flex-shrink-0">
-                      {currencySymbol}
-                      {formatAmount(cat.value)}
+                      {formatAmountWithPrivacy(cat.value)}
                     </span>
                   </div>
                   <div className="h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
@@ -760,12 +768,11 @@ export function Dashboard({
                       style={{ backgroundColor: item.color }}
                     />
                     <span className="text-xs sm:text-sm truncate">
-                      {item.name}
+                      {maskReason(item.name, settings)}
                     </span>
                   </div>
                   <span className="font-mono text-xs sm:text-sm flex-shrink-0">
-                    {currencySymbol}
-                    {formatAmount(item.value)}
+                    {formatAmountWithPrivacy(item.value)}
                   </span>
                 </div>
               ))}
@@ -800,7 +807,9 @@ export function Dashboard({
                     fontSize: "11px",
                   }}
                   formatter={(value: number) => [
-                    `${currencySymbol}${formatAmount(value)}`,
+                    settings.privacyMode?.hideAmounts
+                      ? formatMaskedAmount(value, settings, currencySymbol)
+                      : `${currencySymbol}${formatAmount(value)}`,
                     "Spent",
                   ]}
                 />
@@ -847,7 +856,9 @@ export function Dashboard({
                     savings: "Savings",
                   };
                   return [
-                    `${currencySymbol}${formatAmount(value)}`,
+                    settings.privacyMode?.hideAmounts
+                      ? formatMaskedAmount(value, settings, currencySymbol)
+                      : `${currencySymbol}${formatAmount(value)}`,
                     labels[name] || name,
                   ];
                 }}

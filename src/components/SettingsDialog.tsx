@@ -274,9 +274,7 @@ export function SettingsDialog({
           {activeTab === "general" && (
             <div className="space-y-6">
               <div>
-                <label className="text-sm text-muted-foreground mb-2 block">
-                  Currency
-                </label>
+                <div className="text-sm font-medium mb-2 block">Currency</div>
                 <select
                   value={localSettings.currency}
                   onChange={(e) => handleCurrencyChange(e.target.value)}
@@ -295,6 +293,98 @@ export function SettingsDialog({
                   This currency will be used throughout the app for displaying
                   amounts.
                 </p>
+              </div>
+
+              {/* Privacy Mode Section */}
+              <div className="border-t border-border pt-6">
+                <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  Privacy Mode
+                </h3>
+                <div className="space-y-3">
+                  {/* Hide Amounts Toggle */}
+                  <label className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">
+                          Hide Amounts
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Mask all transaction amounts with ••••
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLocalSettings({
+                          ...localSettings,
+                          privacyMode: {
+                            hideAmounts:
+                              !localSettings.privacyMode?.hideAmounts,
+                            hideReasons:
+                              localSettings.privacyMode?.hideReasons ?? false,
+                          },
+                        });
+                      }}
+                      className={cn(
+                        "relative w-11 h-6 rounded-full transition-colors",
+                        localSettings.privacyMode?.hideAmounts
+                          ? "bg-primary"
+                          : "bg-muted"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-background transition-transform",
+                          localSettings.privacyMode?.hideAmounts &&
+                            "translate-x-5"
+                        )}
+                      />
+                    </button>
+                  </label>
+
+                  {/* Hide Reasons Toggle */}
+                  <label className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">
+                          Hide Reasons
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Mask all transaction reasons with ••••••
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLocalSettings({
+                          ...localSettings,
+                          privacyMode: {
+                            hideAmounts:
+                              localSettings.privacyMode?.hideAmounts ?? false,
+                            hideReasons:
+                              !localSettings.privacyMode?.hideReasons,
+                          },
+                        });
+                      }}
+                      className={cn(
+                        "relative w-11 h-6 rounded-full transition-colors",
+                        localSettings.privacyMode?.hideReasons
+                          ? "bg-primary"
+                          : "bg-muted"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-background transition-transform",
+                          localSettings.privacyMode?.hideReasons &&
+                            "translate-x-5"
+                        )}
+                      />
+                    </button>
+                  </label>
+                </div>
               </div>
 
               {/* App Update Section */}

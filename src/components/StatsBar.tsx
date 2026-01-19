@@ -2,6 +2,8 @@ import { useState } from "react";
 import { formatAmount } from "@/lib/parser";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { AppSettings } from "@/lib/types";
+import { formatMaskedAmount } from "@/lib/privacy";
 
 interface StatsBarProps {
   stats: {
@@ -13,9 +15,10 @@ interface StatsBarProps {
     transactionCount: number;
   };
   currencySymbol: string;
+  settings: AppSettings;
 }
 
-export function StatsBar({ stats, currencySymbol }: StatsBarProps) {
+export function StatsBar({ stats, currencySymbol, settings }: StatsBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const needsPercent =
@@ -63,18 +66,32 @@ export function StatsBar({ stats, currencySymbol }: StatsBarProps) {
                 balance >= 0 ? "text-income" : "text-expense"
               )}
             >
-              {balance >= 0 ? "+" : ""}
-              {currencySymbol}
-              {formatAmount(Math.abs(balance))}
+              {settings.privacyMode?.hideAmounts
+                ? formatMaskedAmount(
+                    Math.abs(balance),
+                    settings,
+                    currencySymbol
+                  )
+                : `${balance >= 0 ? "+" : ""}${currencySymbol}${formatAmount(Math.abs(balance))}`}
             </p>
             <div className="flex justify-center gap-4 mt-2 text-xs">
               <span className="text-income">
-                +{currencySymbol}
-                {formatAmount(stats.totalIncome)}
+                {settings.privacyMode?.hideAmounts
+                  ? formatMaskedAmount(
+                      stats.totalIncome,
+                      settings,
+                      currencySymbol
+                    )
+                  : `+${currencySymbol}${formatAmount(stats.totalIncome)}`}
               </span>
               <span className="text-expense">
-                -{currencySymbol}
-                {formatAmount(stats.totalExpenses)}
+                {settings.privacyMode?.hideAmounts
+                  ? formatMaskedAmount(
+                      stats.totalExpenses,
+                      settings,
+                      currencySymbol
+                    )
+                  : `-${currencySymbol}${formatAmount(stats.totalExpenses)}`}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -108,8 +125,13 @@ export function StatsBar({ stats, currencySymbol }: StatsBarProps) {
                         stats.needsTotal > 0 && "text-need"
                       )}
                     >
-                      {currencySymbol}
-                      {formatAmount(stats.needsTotal)}
+                      {settings.privacyMode?.hideAmounts
+                        ? formatMaskedAmount(
+                            stats.needsTotal,
+                            settings,
+                            currencySymbol
+                          )
+                        : `${currencySymbol}${formatAmount(stats.needsTotal)}`}
                     </span>
                   </span>
                   <span className="flex items-center gap-1.5">
@@ -121,15 +143,26 @@ export function StatsBar({ stats, currencySymbol }: StatsBarProps) {
                         stats.wantsTotal > 0 && "text-want"
                       )}
                     >
-                      {currencySymbol}
-                      {formatAmount(stats.wantsTotal)}
+                      {settings.privacyMode?.hideAmounts
+                        ? formatMaskedAmount(
+                            stats.wantsTotal,
+                            settings,
+                            currencySymbol
+                          )
+                        : `${currencySymbol}${formatAmount(stats.wantsTotal)}`}
                     </span>
                   </span>
                 </div>
                 {stats.uncategorized > 0 && (
                   <span className="text-muted-foreground">
-                    {currencySymbol}
-                    {formatAmount(stats.uncategorized)} uncategorized
+                    {settings.privacyMode?.hideAmounts
+                      ? formatMaskedAmount(
+                          stats.uncategorized,
+                          settings,
+                          currencySymbol
+                        )
+                      : `${currencySymbol}${formatAmount(stats.uncategorized)}`}{" "}
+                    uncategorized
                   </span>
                 )}
               </div>

@@ -27,6 +27,10 @@ export interface ParsedInput {
 export interface AppSettings {
   currency: string;
   currencySymbol: string;
+  privacyMode?: {
+    hideAmounts: boolean;
+    hideReasons: boolean;
+  };
 }
 
 export interface StreakData {

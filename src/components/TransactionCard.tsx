@@ -1,15 +1,17 @@
 import { useRef, useCallback } from "react";
 import { Trash2, Pencil } from "lucide-react";
-import { Transaction, NecessityType } from "@/lib/types";
+import { Transaction, NecessityType, AppSettings } from "@/lib/types";
 import { formatAmount } from "@/lib/parser";
 import { cn, haptic } from "@/lib/utils";
 import { SwipeableCard } from "./SwipeableCard";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { maskReason, formatMaskedAmount } from "@/lib/privacy";
 
 interface TransactionCardProps {
   transaction: Transaction;
   currencySymbol: string;
+  settings: AppSettings;
   onDelete: (id: string) => void;
   onEdit: (transaction: Transaction) => void;
   onUpdateNecessity: (id: string, necessity: NecessityType) => void;
@@ -20,6 +22,7 @@ interface TransactionCardProps {
 export function TransactionCard({
   transaction,
   currencySymbol,
+  settings,
   onDelete,
   onEdit,
   onUpdateNecessity,
@@ -116,7 +119,7 @@ export function TransactionCard({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <p className="font-medium capitalize truncate text-foreground">
-            {transaction.reason}
+            {maskReason(transaction.reason, settings)}
           </p>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span>{transaction.paymentMode}</span>
@@ -137,9 +140,9 @@ export function TransactionCard({
               transaction.type === "expense" ? "text-expense" : "text-income"
             )}
           >
-            {transaction.type === "expense" ? "-" : "+"}
-            {currencySymbol}
-            {formatAmount(transaction.amount)}
+            {settings.privacyMode?.hideAmounts
+              ? formatMaskedAmount(transaction.amount, settings, currencySymbol)
+              : `${transaction.type === "expense" ? "-" : "+"}${currencySymbol}${formatAmount(transaction.amount)}`}
           </p>
         </div>
 
