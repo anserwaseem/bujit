@@ -1,10 +1,6 @@
 import { Transaction } from "./types";
 import { isOnline } from "./connectivity";
-import {
-  getGoogleSheetsConfig,
-  saveGoogleSheetsConfig,
-  type GoogleSheetsConfig,
-} from "./storage";
+import { getGoogleSheetsConfig, saveGoogleSheetsConfig } from "./storage";
 
 // Google OAuth Client ID - can be set via environment variable or hardcoded
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
@@ -112,32 +108,6 @@ export async function authenticateGoogle(): Promise<{
 
     tokenClient.requestAccessToken({ prompt: "consent" });
   });
-}
-
-// refresh access token using refresh token
-async function refreshAccessToken(refreshToken: string): Promise<string> {
-  if (!isOnline()) {
-    throw new Error("Device is offline. Cannot refresh token.");
-  }
-
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      refresh_token: refreshToken,
-      grant_type: "refresh_token",
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to refresh access token");
-  }
-
-  const data = await response.json();
-  return data.access_token;
 }
 
 // get valid access token (refresh if needed)

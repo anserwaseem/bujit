@@ -9,7 +9,6 @@ import {
   YAxis,
   ResponsiveContainer,
   Tooltip,
-  LineChart,
   Line,
   AreaChart,
   Area,
@@ -32,18 +31,9 @@ import {
   DollarSign,
   CalendarCheck,
   Leaf,
-  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  startOfYear,
-  endOfYear,
-  subMonths,
-  subYears,
-} from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 interface DashboardProps {
   transactions: Transaction[];
@@ -61,7 +51,6 @@ export function Dashboard({
 
   const analytics = useMemo(() => {
     const now = new Date();
-    const startOfMonthDate = startOfMonth(now);
     const startOfLastMonth = startOfMonth(subMonths(now, 1));
     const endOfLastMonth = endOfMonth(subMonths(now, 1));
 
@@ -80,20 +69,10 @@ export function Dashboard({
         new Date(t.date) <= endOfLastMonth &&
         t.type === "expense"
     );
-    const lastMonthIncome = transactions.filter(
-      (t) =>
-        new Date(t.date) >= startOfLastMonth &&
-        new Date(t.date) <= endOfLastMonth &&
-        t.type === "income"
-    );
 
     const periodTotal = periodExpenses.reduce((sum, t) => sum + t.amount, 0);
     const lastMonthTotal = lastMonth.reduce((sum, t) => sum + t.amount, 0);
     const periodIncomeTotal = periodIncome.reduce(
-      (sum, t) => sum + t.amount,
-      0
-    );
-    const lastMonthIncomeTotal = lastMonthIncome.reduce(
       (sum, t) => sum + t.amount,
       0
     );
@@ -110,7 +89,6 @@ export function Dashboard({
 
     // Savings for period
     const savingsThisPeriod = periodIncomeTotal - periodTotal;
-    const savingsLastMonth = lastMonthIncomeTotal - lastMonthTotal;
     const savingsRate =
       periodIncomeTotal > 0 ? (savingsThisPeriod / periodIncomeTotal) * 100 : 0;
 

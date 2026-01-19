@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useStreakTracking } from "../useStreakTracking";
 import { Transaction } from "@/lib/types";
-import { format, startOfDay, subDays } from "date-fns";
+import { startOfDay, subDays } from "date-fns";
 
 describe("useStreakTracking", () => {
   beforeEach(() => {

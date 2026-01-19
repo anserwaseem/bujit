@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useBudgly } from "../useBudgly";
+import { useBujit } from "../useBujit";
 import * as storage from "@/lib/storage";
 import type { Transaction, PaymentMode, AppSettings } from "@/lib/types";
 
@@ -20,7 +20,7 @@ describe("useBudgly", () => {
 
   describe("initialization", () => {
     it("should initialize with empty transactions and default values", () => {
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       expect(result.current.transactions).toEqual([]);
       expect(result.current.paymentModes.length).toBeGreaterThan(0);
@@ -43,7 +43,7 @@ describe("useBudgly", () => {
       ];
       storage.addTransaction(mockTransactions[0]);
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       expect(result.current.transactions).toHaveLength(1);
       expect(result.current.transactions[0].id).toBe("1");
@@ -56,7 +56,7 @@ describe("useBudgly", () => {
       ];
       storage.savePaymentModes(customModes);
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       expect(result.current.paymentModes).toEqual(customModes);
     });
@@ -68,7 +68,7 @@ describe("useBudgly", () => {
       };
       storage.saveSettings(customSettings);
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       expect(result.current.settings).toEqual(customSettings);
     });
@@ -76,7 +76,7 @@ describe("useBudgly", () => {
     it("should load theme from storage on mount", () => {
       storage.saveTheme("light");
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       expect(result.current.theme).toBe("light");
       expect(document.documentElement.classList.contains("dark")).toBe(false);
@@ -86,7 +86,7 @@ describe("useBudgly", () => {
       storage.saveTheme("dark");
       document.documentElement.classList.remove("dark");
 
-      renderHook(() => useBudgly());
+      renderHook(() => useBujit());
 
       expect(document.documentElement.classList.contains("dark")).toBe(true);
     });
@@ -95,7 +95,7 @@ describe("useBudgly", () => {
       // set invalid data in localStorage
       localStorage.setItem("bujit_transactions", "invalid json");
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       // should return empty array, not crash
       expect(result.current.transactions).toEqual([]);
@@ -109,7 +109,7 @@ describe("useBudgly", () => {
         JSON.stringify({ not: "array" })
       );
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       expect(result.current.transactions).toEqual([]);
     });
@@ -131,7 +131,7 @@ describe("useBudgly", () => {
       ];
       localStorage.setItem("bujit_transactions", JSON.stringify(invalidData));
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       expect(result.current.transactions).toHaveLength(1);
       expect(result.current.transactions[0].id).toBe("2");
@@ -140,7 +140,7 @@ describe("useBudgly", () => {
 
   describe("transaction operations", () => {
     it("should add a transaction and update state", () => {
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       let newTransaction: Transaction;
       act(() => {
@@ -176,7 +176,7 @@ describe("useBudgly", () => {
       };
       storage.addTransaction(existing);
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       act(() => {
         result.current.addTransaction({
@@ -207,7 +207,7 @@ describe("useBudgly", () => {
       };
       storage.addTransaction(transaction);
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       act(() => {
         result.current.deleteTransaction("to-delete");
@@ -220,7 +220,7 @@ describe("useBudgly", () => {
     });
 
     it("should handle deleting non-existent transaction gracefully", () => {
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       act(() => {
         result.current.deleteTransaction("non-existent");
@@ -241,7 +241,7 @@ describe("useBudgly", () => {
       };
       storage.addTransaction(transaction);
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       act(() => {
         result.current.updateNecessity("to-update", "need");
@@ -265,7 +265,7 @@ describe("useBudgly", () => {
       };
       storage.addTransaction(transaction);
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       act(() => {
         result.current.updateTransaction("to-update", {
@@ -283,7 +283,7 @@ describe("useBudgly", () => {
     });
 
     it("should handle updating non-existent transaction gracefully", () => {
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       act(() => {
         result.current.updateTransaction("non-existent", { amount: 200 });
@@ -295,7 +295,7 @@ describe("useBudgly", () => {
 
   describe("error handling", () => {
     it("should handle storage quota exceeded error when adding transaction", () => {
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       // mock setItem to throw QuotaExceededError
       const setItemSpy = vi
@@ -332,7 +332,7 @@ describe("useBudgly", () => {
           throw new Error("localStorage unavailable");
         });
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       // should return defaults, not crash
       expect(result.current.transactions).toEqual([]);
@@ -345,7 +345,7 @@ describe("useBudgly", () => {
   describe("theme operations", () => {
     it("should toggle theme from dark to light", () => {
       storage.saveTheme("dark");
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       act(() => {
         result.current.toggleTheme();
@@ -358,7 +358,7 @@ describe("useBudgly", () => {
 
     it("should toggle theme from light to dark", () => {
       storage.saveTheme("light");
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       act(() => {
         result.current.toggleTheme();
@@ -377,7 +377,7 @@ describe("useBudgly", () => {
         { id: "3", name: "Credit Card", shorthand: "CC" },
       ];
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       act(() => {
         result.current.updatePaymentModes(newModes);
@@ -393,7 +393,7 @@ describe("useBudgly", () => {
         currencySymbol: "$",
       };
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       act(() => {
         result.current.updateSettings(newSettings);
@@ -401,298 +401,6 @@ describe("useBudgly", () => {
 
       expect(result.current.settings).toEqual(newSettings);
       expect(storage.getSettings()).toEqual(newSettings);
-    });
-  });
-
-  describe("stats calculation", () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-
-    it("should calculate stats for all transactions (no date filtering)", () => {
-      // set fixed date: 2024-06-15 (mid-month)
-      const fixedDate = new Date("2024-06-15T12:00:00.000Z");
-      vi.setSystemTime(fixedDate);
-
-      const thisMonth = new Date("2024-06-10T12:00:00.000Z");
-      const lastMonth = new Date("2024-05-10T12:00:00.000Z");
-
-      const transactions: Transaction[] = [
-        {
-          id: "1",
-          date: thisMonth.toISOString(),
-          reason: "coffee",
-          amount: 100,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: "need",
-        },
-        {
-          id: "2",
-          date: thisMonth.toISOString(),
-          reason: "lunch",
-          amount: 200,
-          paymentMode: "Debit Card",
-          type: "expense",
-          necessity: "want",
-        },
-        {
-          id: "3",
-          date: lastMonth.toISOString(),
-          reason: "old expense",
-          amount: 50,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: null,
-        },
-        {
-          id: "4",
-          date: thisMonth.toISOString(),
-          reason: "salary",
-          amount: 5000,
-          paymentMode: "Cash",
-          type: "income",
-          necessity: null,
-        },
-      ];
-
-      transactions.forEach((t) => storage.addTransaction(t));
-
-      const { result } = renderHook(() => useBudgly());
-
-      // Stats now include ALL transactions (filtering is done in useFilters)
-      expect(result.current.stats.totalExpenses).toBe(350); // 100 + 200 + 50
-      expect(result.current.stats.totalIncome).toBe(5000);
-      expect(result.current.stats.needsTotal).toBe(100);
-      expect(result.current.stats.wantsTotal).toBe(200);
-      expect(result.current.stats.uncategorized).toBe(50); // from lastMonth transaction
-      expect(result.current.stats.transactionCount).toBe(4); // all transactions
-    });
-
-    it("should calculate stats for all transactions regardless of date", () => {
-      const fixedDate = new Date("2024-06-15T12:00:00.000Z");
-      vi.setSystemTime(fixedDate);
-
-      const thisMonth = new Date("2024-06-10T12:00:00.000Z");
-      const lastMonth = new Date("2024-05-10T12:00:00.000Z");
-
-      const transactions: Transaction[] = [
-        {
-          id: "1",
-          date: thisMonth.toISOString(),
-          reason: "coffee",
-          amount: 100,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: null,
-        },
-        {
-          id: "2",
-          date: lastMonth.toISOString(),
-          reason: "lunch",
-          amount: 200,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: null,
-        },
-      ];
-
-      transactions.forEach((t) => storage.addTransaction(t));
-
-      const { result } = renderHook(() => useBudgly());
-
-      // Stats include ALL transactions (date filtering is now in useFilters)
-      expect(result.current.stats.totalExpenses).toBe(300); // 100 + 200
-      expect(result.current.stats.transactionCount).toBe(2); // both transactions
-    });
-
-    it("should calculate stats for allTime period", () => {
-      const fixedDate = new Date("2024-06-15T12:00:00.000Z");
-      vi.setSystemTime(fixedDate);
-
-      const thisMonth = new Date("2024-06-10T12:00:00.000Z");
-      const lastMonth = new Date("2024-05-10T12:00:00.000Z");
-      const oldDate = new Date("2023-01-10T12:00:00.000Z");
-
-      const transactions: Transaction[] = [
-        {
-          id: "1",
-          date: thisMonth.toISOString(),
-          reason: "coffee",
-          amount: 100,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: null,
-        },
-        {
-          id: "2",
-          date: lastMonth.toISOString(),
-          reason: "lunch",
-          amount: 200,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: null,
-        },
-        {
-          id: "3",
-          date: oldDate.toISOString(),
-          reason: "old expense",
-          amount: 50,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: null,
-        },
-      ];
-
-      transactions.forEach((t) => storage.addTransaction(t));
-
-      const { result } = renderHook(() => useBudgly());
-
-      // Stats include ALL transactions (date filtering is now in useFilters)
-      expect(result.current.stats.totalExpenses).toBe(350); // 100 + 200 + 50
-      expect(result.current.stats.transactionCount).toBe(3);
-    });
-
-    it("should handle empty transactions for stats", () => {
-      const { result } = renderHook(() => useBudgly());
-
-      expect(result.current.stats.totalExpenses).toBe(0);
-      expect(result.current.stats.totalIncome).toBe(0);
-      expect(result.current.stats.needsTotal).toBe(0);
-      expect(result.current.stats.wantsTotal).toBe(0);
-      expect(result.current.stats.uncategorized).toBe(0);
-      expect(result.current.stats.transactionCount).toBe(0);
-    });
-
-    it("should calculate uncategorized expenses correctly", () => {
-      const fixedDate = new Date("2024-06-15T12:00:00.000Z");
-      vi.setSystemTime(fixedDate);
-
-      const thisMonth = new Date("2024-06-10T12:00:00.000Z");
-
-      const transactions: Transaction[] = [
-        {
-          id: "1",
-          date: thisMonth.toISOString(),
-          reason: "coffee",
-          amount: 100,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: "need",
-        },
-        {
-          id: "2",
-          date: thisMonth.toISOString(),
-          reason: "lunch",
-          amount: 200,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: "want",
-        },
-        {
-          id: "3",
-          date: thisMonth.toISOString(),
-          reason: "dinner",
-          amount: 150,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: null,
-        },
-      ];
-
-      transactions.forEach((t) => storage.addTransaction(t));
-
-      const { result } = renderHook(() => useBudgly());
-
-      expect(result.current.stats.uncategorized).toBe(150);
-    });
-  });
-
-  describe("grouped transactions", () => {
-    it("should group transactions by date with daily totals", () => {
-      const date1 = new Date("2024-01-15T12:00:00.000Z");
-      const date2 = new Date("2024-01-16T12:00:00.000Z");
-
-      const transactions: Transaction[] = [
-        {
-          id: "1",
-          date: date1.toISOString(),
-          reason: "coffee",
-          amount: 100,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: null,
-        },
-        {
-          id: "2",
-          date: date1.toISOString(),
-          reason: "lunch",
-          amount: 200,
-          paymentMode: "Debit Card",
-          type: "expense",
-          necessity: null,
-        },
-        {
-          id: "3",
-          date: date2.toISOString(),
-          reason: "dinner",
-          amount: 300,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: null,
-        },
-      ];
-
-      transactions.forEach((t) => storage.addTransaction(t));
-
-      const { result } = renderHook(() => useBudgly());
-
-      const grouped = result.current.groupedTransactions;
-      expect(grouped).toHaveLength(2);
-      // most recent first
-      expect(grouped[0][1].transactions).toHaveLength(1);
-      expect(grouped[0][1].dayTotal).toBe(300);
-      expect(grouped[1][1].transactions).toHaveLength(2);
-      expect(grouped[1][1].dayTotal).toBe(300); // 100 + 200
-    });
-
-    it("should exclude income from daily totals", () => {
-      const date = new Date("2024-01-15T12:00:00.000Z");
-
-      const transactions: Transaction[] = [
-        {
-          id: "1",
-          date: date.toISOString(),
-          reason: "coffee",
-          amount: 100,
-          paymentMode: "Cash",
-          type: "expense",
-          necessity: null,
-        },
-        {
-          id: "2",
-          date: date.toISOString(),
-          reason: "salary",
-          amount: 5000,
-          paymentMode: "Cash",
-          type: "income",
-          necessity: null,
-        },
-      ];
-
-      transactions.forEach((t) => storage.addTransaction(t));
-
-      const { result } = renderHook(() => useBudgly());
-
-      const grouped = result.current.groupedTransactions;
-      expect(grouped).toHaveLength(1);
-      expect(grouped[0][1].dayTotal).toBe(100); // only expense, not income
-    });
-
-    it("should handle empty transactions for grouping", () => {
-      const { result } = renderHook(() => useBudgly());
-
-      expect(result.current.groupedTransactions).toHaveLength(0);
     });
   });
 
@@ -749,7 +457,7 @@ describe("useBudgly", () => {
 
       transactions.forEach((t) => storage.addTransaction(t));
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       const suggestions = result.current.quickAddSuggestions;
       expect(suggestions.length).toBeGreaterThan(0);
@@ -795,7 +503,7 @@ describe("useBudgly", () => {
 
       transactions.forEach((t) => storage.addTransaction(t));
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       const suggestions = result.current.quickAddSuggestions;
       expect(suggestions.length).toBe(1);
@@ -850,7 +558,7 @@ describe("useBudgly", () => {
 
       transactions.forEach((t) => storage.addTransaction(t));
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       const suggestions = result.current.quickAddSuggestions;
       expect(suggestions.length).toBe(1);
@@ -859,7 +567,7 @@ describe("useBudgly", () => {
     });
 
     it("should handle empty transactions for suggestions", () => {
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       expect(result.current.quickAddSuggestions).toHaveLength(0);
     });
@@ -893,7 +601,7 @@ describe("useBudgly", () => {
 
       transactions.forEach((t) => storage.addTransaction(t));
 
-      const { result } = renderHook(() => useBudgly());
+      const { result } = renderHook(() => useBujit());
 
       expect(result.current.quickAddSuggestions).toHaveLength(0);
     });

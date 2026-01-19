@@ -1,10 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useGoogleSheets } from "../useGoogleSheets";
-import * as googleSheets from "@/lib/googleSheets";
 import * as storage from "@/lib/storage";
 import * as connectivity from "@/lib/connectivity";
-import { useToast } from "@/hooks/use-toast";
 
 // mock dependencies
 vi.mock("@/lib/googleSheets");

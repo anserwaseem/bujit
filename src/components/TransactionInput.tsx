@@ -21,7 +21,6 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useAutoComplete } from "@/hooks/useAutoComplete";
-import { useAmountPresets } from "@/hooks/useAmountPresets";
 import { useLearnedNecessity } from "@/hooks/useLearnedNecessity";
 import { toast } from "@/hooks/use-toast";
 
@@ -30,7 +29,6 @@ interface TransactionInputProps {
   currencySymbol: string;
   quickAddSuggestions: Transaction[];
   transactions: Transaction[];
-  todayCount: number;
   onAdd: (transaction: Omit<Transaction, "id">) => void;
   onRepeatLast?: () => void;
   lastTransaction?: Transaction | null;
@@ -41,7 +39,6 @@ export function TransactionInput({
   currencySymbol,
   quickAddSuggestions,
   transactions,
-  todayCount,
   onAdd,
   onRepeatLast,
   lastTransaction,
@@ -82,9 +79,6 @@ export function TransactionInput({
   // Auto-complete suggestions
   const autoCompleteSuggestions = useAutoComplete(transactions, input);
 
-  // Amount presets
-  const amountPresets = useAmountPresets(transactions);
-
   // Learned necessity
   const { getSuggestedNecessity, recordNecessity, isLearned } =
     useLearnedNecessity(transactions);
@@ -113,29 +107,6 @@ export function TransactionInput({
     const suggested = getSuggestedNecessity(suggestion.transaction.reason);
     setSelectedNecessity(suggested || suggestion.transaction.necessity);
     setShowAutoComplete(false);
-  };
-
-  const handleAmountPreset = (amount: number) => {
-    haptic("light");
-    const currentInput = input.trim();
-
-    // If input has text but no amount, append the amount
-    if (currentInput.length > 0) {
-      // Check if there's already an amount at the end
-      const parts = currentInput.split(" ");
-      const lastPart = parts[parts.length - 1];
-      if (!isNaN(Number(lastPart))) {
-        // Replace existing amount
-        parts[parts.length - 1] = amount.toString();
-        setInput(parts.join(" "));
-      } else {
-        setInput(`${currentInput} ${amount}`);
-      }
-    } else {
-      setInput(amount.toString());
-    }
-
-    inputRef.current?.focus();
   };
 
   const parsed = useMemo(
@@ -471,11 +442,13 @@ export function TransactionInput({
                   : "—"}
               </p>
               {/* Show math preview when expression contains operators */}
-              {parsed.amount && input.trim().split(/\s+/).pop() && hasOperators(input.trim().split(/\s+/).pop()!) && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  = {formatEvaluatedAmount(parsed.amount, currencySymbol)}
-                </p>
-              )}
+              {parsed.amount &&
+                input.trim().split(/\s+/).pop() &&
+                hasOperators(input.trim().split(/\s+/).pop()!) && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    = {formatEvaluatedAmount(parsed.amount, currencySymbol)}
+                  </p>
+                )}
             </div>
           </div>
 

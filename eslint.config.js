@@ -24,7 +24,17 @@ export default tseslint.config(
         "error",
         { allowConstantExport: true },
       ],
-      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          args: "all",
+          argsIgnorePattern: "^_",
+          vars: "all",
+          varsIgnorePattern: "^_",
+          caughtErrors: "all",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
       // treat all warnings as errors
       "no-case-declarations": "error",
       "react-hooks/exhaustive-deps": "error",

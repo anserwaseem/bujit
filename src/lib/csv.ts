@@ -203,7 +203,8 @@ export function parseCSVToTransactions(
         type: trimmedType as "expense" | "income",
         necessity: validNecessity,
       });
-    } catch (err) {
+    } catch (err: unknown) {
+      console.error(err);
       errors.push(`Row ${i + 1}: Failed to parse`);
     }
   }

@@ -5,7 +5,7 @@ import {
   Activity,
   startTransition,
 } from "react";
-import { useBudgly } from "@/hooks/useBudgly";
+import { useBujit } from "@/hooks/useBujit";
 import { FilterProvider, useFilters } from "@/hooks/useFilters.tsx";
 import { Header } from "@/components/Header";
 import { StatsBar } from "@/components/StatsBar";
@@ -18,7 +18,6 @@ import { EditTransactionDialog } from "@/components/EditTransactionDialog";
 import { PaymentMode, Transaction } from "@/lib/types";
 import { BarChart3, List } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 
 const IndexContent = () => {
   const {
@@ -26,8 +25,6 @@ const IndexContent = () => {
     paymentModes,
     theme,
     settings,
-    stats,
-    groupedTransactions,
     quickAddSuggestions,
     streakData,
     toggleTheme,
@@ -37,7 +34,7 @@ const IndexContent = () => {
     updateTransaction,
     updatePaymentModes,
     updateSettings,
-  } = useBudgly();
+  } = useBujit();
 
   const { getFilteredTransactions } = useFilters();
 
@@ -115,14 +112,6 @@ const IndexContent = () => {
       ([a], [b]) => new Date(b).getTime() - new Date(a).getTime()
     );
   }, [filteredTransactions]);
-
-  // Today's transaction count
-  const todayCount = useMemo(() => {
-    const today = format(new Date(), "yyyy-MM-dd");
-    return transactions.filter(
-      (t) => format(new Date(t.date), "yyyy-MM-dd") === today
-    ).length;
-  }, [transactions]);
 
   // Last transaction for repeat feature
   const lastTransaction = useMemo(() => {
@@ -205,7 +194,6 @@ const IndexContent = () => {
               currencySymbol={settings.currencySymbol}
               quickAddSuggestions={quickAddSuggestions}
               transactions={transactions}
-              todayCount={todayCount}
               onAdd={addTransaction}
               onRepeatLast={handleRepeatLast}
               lastTransaction={lastTransaction}

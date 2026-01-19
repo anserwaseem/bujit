@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { Transaction, NecessityType } from "@/lib/types";
 
 const LEARNED_KEY = "bujit_learned_necessity";

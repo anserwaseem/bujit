@@ -16,7 +16,7 @@ if ("serviceWorker" in navigator) {
   const registerServiceWorker = () => {
     registerSW({
       immediate: false, // don't block on update checks - critical for online performance
-      onRegisteredSW(swUrl, registration) {
+      onRegisteredSW(_swUrl, registration) {
         if (registration) {
           setServiceWorkerRegistration(registration);
           // check for updates every 5 minutes (deferred to not block initial load)

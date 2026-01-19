@@ -6,25 +6,13 @@ import {
   AppSettings,
 } from "@/lib/types";
 import {
-  getTransactions,
   addTransaction,
   deleteTransaction,
   updateTransaction,
-  getPaymentModes,
   savePaymentModes,
-  getTheme,
   saveTheme,
-  getSettings,
   saveSettings,
 } from "@/lib/storage";
-import {
-  startOfMonth,
-  endOfMonth,
-  startOfYear,
-  endOfYear,
-  subMonths,
-  subYears,
-} from "date-fns";
 import { isOnline } from "@/lib/connectivity";
 import {
   getGoogleSheetsConfig,
@@ -115,7 +103,7 @@ function getInitialSettings(): AppSettings {
   }
 }
 
-export function useBudgly() {
+export function useBujit() {
   // initialize state synchronously with localStorage values
   // this prevents delay from useEffect and ensures immediate render
   const [transactions, setTransactions] = useState<Transaction[]>(
@@ -239,55 +227,6 @@ export function useBudgly() {
     saveSettings(newSettings);
   }, []);
 
-  // Calculate stats from all transactions (filtering happens at higher level)
-  const stats = useMemo(() => {
-    const totalExpenses = transactions
-      .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const totalIncome = transactions
-      .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const needsTotal = transactions
-      .filter((t) => t.type === "expense" && t.necessity === "need")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const wantsTotal = transactions
-      .filter((t) => t.type === "expense" && t.necessity === "want")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const uncategorized = transactions
-      .filter((t) => t.type === "expense" && t.necessity === null)
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    return {
-      totalExpenses,
-      totalIncome,
-      needsTotal,
-      wantsTotal,
-      uncategorized,
-      transactionCount: transactions.length,
-    };
-  }, [transactions]);
-
-  // Group transactions by date with daily totals
-  const groupedTransactions = useMemo(() => {
-    const groups: Record<
-      string,
-      { transactions: Transaction[]; dayTotal: number }
-    > = {};
-    transactions.forEach((t) => {
-      const dateKey = new Date(t.date).toDateString();
-      if (!groups[dateKey]) {
-        groups[dateKey] = { transactions: [], dayTotal: 0 };
-      }
-      groups[dateKey].transactions.push(t);
-      if (t.type === "expense") {
-        groups[dateKey].dayTotal += t.amount;
-      }
-    });
-    return Object.entries(groups).sort(
-      ([a], [b]) => new Date(b).getTime() - new Date(a).getTime()
-    );
-  }, [transactions]);
-
   // Quick add suggestions based on recent frequent transactions
   const quickAddSuggestions = useMemo(() => {
     const sevenDaysAgo = new Date();
@@ -334,8 +273,6 @@ export function useBudgly() {
     paymentModes,
     theme,
     settings,
-    stats,
-    groupedTransactions,
     quickAddSuggestions,
     streakData,
     toggleTheme,

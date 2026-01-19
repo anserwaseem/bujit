@@ -24,10 +24,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 interface TransactionListProps {
-  groupedTransactions: [
-    string,
-    { transactions: Transaction[]; dayTotal: number },
-  ][];
+  groupedTransactions: [string, { transactions: Transaction[] }][];
   currencySymbol: string;
   onDelete: (id: string) => void;
   onEdit: (transaction: Transaction) => void;
@@ -172,10 +169,6 @@ export function TransactionList({
   const hasMore =
     regroupedTransactions.length > 0 &&
     visibleCount < regroupedTransactions.length;
-  const totalCount = groupedTransactions.reduce(
-    (sum, [, { transactions }]) => sum + transactions.length,
-    0
-  );
 
   const toggleGroup = (key: string) => {
     setExpandedGroups((prev) => {
@@ -267,137 +260,135 @@ export function TransactionList({
 
       {/* Transaction Groups */}
       <div className="space-y-2">
-        {visibleTransactions.map(
-          ([key, { transactions, dayTotal }], groupIdx) => {
-            const isExpanded = expandedGroups.has(key);
-            const groupIncome = transactions
-              .filter((t) => t.type === "income")
-              .reduce((sum, t) => sum + t.amount, 0);
-            const groupExpense = transactions
-              .filter((t) => t.type === "expense")
-              .reduce((sum, t) => sum + t.amount, 0);
-            const groupNet = groupIncome - groupExpense;
+        {visibleTransactions.map(([key, { transactions }], groupIdx) => {
+          const isExpanded = expandedGroups.has(key);
+          const groupIncome = transactions
+            .filter((t) => t.type === "income")
+            .reduce((sum, t) => sum + t.amount, 0);
+          const groupExpense = transactions
+            .filter((t) => t.type === "expense")
+            .reduce((sum, t) => sum + t.amount, 0);
+          const groupNet = groupIncome - groupExpense;
 
-            return (
-              <Collapsible
-                key={key}
-                open={isExpanded}
-                onOpenChange={() => toggleGroup(key)}
-                className="animate-slide-up"
-                style={{ animationDelay: `${Math.min(groupIdx, 5) * 50}ms` }}
-              >
-                <CollapsibleTrigger className="w-full">
-                  <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors group">
-                    <div className="flex items-center gap-2">
-                      <ChevronDown
-                        className={cn(
-                          "w-4 h-4 text-muted-foreground transition-transform duration-200",
-                          isExpanded && "rotate-180"
-                        )}
-                      />
-                      <span className="text-sm font-medium text-foreground">
-                        {getGroupLabel(key)}
-                      </span>
-                      <span className="text-xs text-muted-foreground px-1.5 py-0.5 bg-background/50 rounded-md">
-                        {transactions.length}
-                      </span>
-                    </div>
-                    {groupIncome > 0 && groupExpense > 0 ? (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <span
-                            className={cn(
-                              "text-sm font-mono font-medium cursor-pointer hover:underline",
-                              groupNet >= 0 ? "text-income" : "text-expense"
-                            )}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {groupNet >= 0 ? "+" : ""}
-                            {currencySymbol}
-                            {Math.abs(groupNet).toLocaleString("en-PK")}
-                          </span>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-48 p-3" align="end">
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs text-muted-foreground">
-                                Income
-                              </span>
-                              <span className="text-sm font-mono font-medium text-income">
-                                +{currencySymbol}
-                                {groupIncome.toLocaleString("en-PK")}
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs text-muted-foreground">
-                                Expenses
-                              </span>
-                              <span className="text-sm font-mono font-medium text-expense">
-                                −{currencySymbol}
-                                {groupExpense.toLocaleString("en-PK")}
-                              </span>
-                            </div>
-                            <div className="h-px bg-border my-1" />
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs font-medium text-foreground">
-                                Net
-                              </span>
-                              <span
-                                className={cn(
-                                  "text-sm font-mono font-semibold",
-                                  groupNet >= 0 ? "text-income" : "text-expense"
-                                )}
-                              >
-                                {groupNet >= 0 ? "+" : ""}
-                                {currencySymbol}
-                                {Math.abs(groupNet).toLocaleString("en-PK")}
-                              </span>
-                            </div>
+          return (
+            <Collapsible
+              key={key}
+              open={isExpanded}
+              onOpenChange={() => toggleGroup(key)}
+              className="animate-slide-up"
+              style={{ animationDelay: `${Math.min(groupIdx, 5) * 50}ms` }}
+            >
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors group">
+                  <div className="flex items-center gap-2">
+                    <ChevronDown
+                      className={cn(
+                        "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                        isExpanded && "rotate-180"
+                      )}
+                    />
+                    <span className="text-sm font-medium text-foreground">
+                      {getGroupLabel(key)}
+                    </span>
+                    <span className="text-xs text-muted-foreground px-1.5 py-0.5 bg-background/50 rounded-md">
+                      {transactions.length}
+                    </span>
+                  </div>
+                  {groupIncome > 0 && groupExpense > 0 ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <span
+                          className={cn(
+                            "text-sm font-mono font-medium cursor-pointer hover:underline",
+                            groupNet >= 0 ? "text-income" : "text-expense"
+                          )}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {groupNet >= 0 ? "+" : ""}
+                          {currencySymbol}
+                          {Math.abs(groupNet).toLocaleString("en-PK")}
+                        </span>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-3" align="end">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">
+                              Income
+                            </span>
+                            <span className="text-sm font-mono font-medium text-income">
+                              +{currencySymbol}
+                              {groupIncome.toLocaleString("en-PK")}
+                            </span>
                           </div>
-                        </PopoverContent>
-                      </Popover>
-                    ) : (
-                      <span
-                        className={cn(
-                          "text-sm font-mono font-medium",
-                          groupNet >= 0 ? "text-income" : "text-expense"
-                        )}
-                      >
-                        {groupNet >= 0 ? "+" : ""}
-                        {currencySymbol}
-                        {Math.abs(groupNet).toLocaleString("en-PK")}
-                      </span>
-                    )}
-                  </div>
-                </CollapsibleTrigger>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">
+                              Expenses
+                            </span>
+                            <span className="text-sm font-mono font-medium text-expense">
+                              −{currencySymbol}
+                              {groupExpense.toLocaleString("en-PK")}
+                            </span>
+                          </div>
+                          <div className="h-px bg-border my-1" />
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-medium text-foreground">
+                              Net
+                            </span>
+                            <span
+                              className={cn(
+                                "text-sm font-mono font-semibold",
+                                groupNet >= 0 ? "text-income" : "text-expense"
+                              )}
+                            >
+                              {groupNet >= 0 ? "+" : ""}
+                              {currencySymbol}
+                              {Math.abs(groupNet).toLocaleString("en-PK")}
+                            </span>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <span
+                      className={cn(
+                        "text-sm font-mono font-medium",
+                        groupNet >= 0 ? "text-income" : "text-expense"
+                      )}
+                    >
+                      {groupNet >= 0 ? "+" : ""}
+                      {currencySymbol}
+                      {Math.abs(groupNet).toLocaleString("en-PK")}
+                    </span>
+                  )}
+                </div>
+              </CollapsibleTrigger>
 
-                <CollapsibleContent>
-                  <div className="space-y-1 pt-2">
-                    {transactions.map((transaction, idx) => (
-                      <div
-                        key={transaction.id}
-                        className="animate-fade-in"
-                        style={{
-                          animationDelay: `${Math.min(idx, 10) * 30}ms`,
-                        }}
-                      >
-                        <TransactionCard
-                          transaction={transaction}
-                          currencySymbol={currencySymbol}
-                          onDelete={onDelete}
-                          onEdit={onEdit}
-                          onUpdateNecessity={onUpdateNecessity}
-                          onDuplicate={onDuplicate}
-                          showDate={groupMode !== "day"}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            );
-          }
-        )}
+              <CollapsibleContent>
+                <div className="space-y-1 pt-2">
+                  {transactions.map((transaction, idx) => (
+                    <div
+                      key={transaction.id}
+                      className="animate-fade-in"
+                      style={{
+                        animationDelay: `${Math.min(idx, 10) * 30}ms`,
+                      }}
+                    >
+                      <TransactionCard
+                        transaction={transaction}
+                        currencySymbol={currencySymbol}
+                        onDelete={onDelete}
+                        onEdit={onEdit}
+                        onUpdateNecessity={onUpdateNecessity}
+                        onDuplicate={onDuplicate}
+                        showDate={groupMode !== "day"}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          );
+        })}
 
         {/* Load More Trigger - only render when there's more to load */}
         {hasMore ? (

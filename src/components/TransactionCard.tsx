@@ -1,5 +1,5 @@
 import { useRef, useCallback } from "react";
-import { Trash2, Pencil, Copy } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { Transaction, NecessityType } from "@/lib/types";
 import { formatAmount } from "@/lib/parser";
 import { cn, haptic } from "@/lib/utils";

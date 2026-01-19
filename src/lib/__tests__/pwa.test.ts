@@ -38,7 +38,7 @@ class MockServiceWorkerRegistrationClass implements ServiceWorkerRegistration {
     subscribe: vi.fn().mockResolvedValue(undefined),
     unsubscribe: vi.fn().mockResolvedValue(undefined),
     getSubscriptions: vi.fn().mockResolvedValue([]),
-  } as unknown as CookieStoreManager;
+  } as unknown;
   scope = "";
   updateViaCache = "imports" as ServiceWorkerUpdateViaCache;
   addEventListener = vi.fn();
@@ -49,20 +49,9 @@ class MockServiceWorkerRegistrationClass implements ServiceWorkerRegistration {
   unregister = vi.fn().mockResolvedValue(false);
 }
 
-interface WindowWithLocation {
-  location: {
-    reload: () => void;
-    href: string;
-  };
-}
-
 interface NavigatorServiceWorkerContainer {
   addEventListener: (type: string, listener: (event: Event) => void) => void;
   controller: ServiceWorker | null;
-}
-
-interface NavigatorWithServiceWorker {
-  serviceWorker: NavigatorServiceWorkerContainer;
 }
 
 // extend global types for test environment
@@ -227,7 +216,6 @@ describe("pwa", () => {
 
       // mock that update doesn't find a waiting worker
       const originalHref = window.location.href;
-      const reloadSpy = vi.spyOn(window.location, "reload");
 
       await safeUpdate();
 
@@ -247,9 +235,6 @@ describe("pwa", () => {
     });
 
     it("should handle missing registration", async () => {
-      // don't set registration
-      const reloadSpy = vi.spyOn(window.location, "reload");
-
       await safeUpdate();
 
       // should do hard refresh
