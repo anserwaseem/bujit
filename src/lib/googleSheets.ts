@@ -110,6 +110,61 @@ export async function authenticateGoogle(): Promise<{
   });
 }
 
+// refresh access token using Google Identity Services
+async function refreshAccessToken(): Promise<string> {
+  if (!isOnline()) {
+    throw new Error("Device is offline. Cannot refresh token.");
+  }
+
+  await initializeGis();
+
+  return new Promise((resolve, reject) => {
+    if (!window.google?.accounts?.oauth2) {
+      reject(new Error("Google OAuth2 not available"));
+      return;
+    }
+
+    const tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: SCOPE,
+      callback: (response: {
+        access_token: string;
+        refresh_token?: string;
+        error?: string;
+        error_description?: string;
+      }) => {
+        if (response.error) {
+          reject(
+            new Error(
+              response.error_description ||
+                `Token refresh failed: ${response.error}`
+            )
+          );
+          return;
+        }
+        if (response.access_token) {
+          // update stored config with new token
+          const config = getGoogleSheetsConfig();
+          if (config) {
+            saveGoogleSheetsConfig({
+              ...config,
+              accessToken: response.access_token,
+              // update refresh token if provided
+              refreshToken: response.refresh_token || config.refreshToken,
+            });
+          }
+          resolve(response.access_token);
+        } else {
+          reject(new Error("No access token received during refresh"));
+        }
+      },
+    });
+
+    // request new token without prompt (uses existing session)
+    tokenClient.requestAccessToken();
+  });
+}
+
 // get valid access token (refresh if needed)
 async function getValidAccessToken(): Promise<string | null> {
   const config = getGoogleSheetsConfig();
@@ -117,10 +172,49 @@ async function getValidAccessToken(): Promise<string | null> {
     return null;
   }
 
-  // if we have a refresh token, try to refresh if access token is expired
-  // for now, we'll just use the access token and let the API call fail if expired
-  // in a production app, you'd check token expiration and refresh proactively
   return config.accessToken;
+}
+
+// make API call with automatic token refresh on 401
+async function makeAuthenticatedRequest(
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  let accessToken = await getValidAccessToken();
+  if (!accessToken) {
+    throw new Error("Not authenticated. Please connect your Google account.");
+  }
+
+  // make initial request
+  let response = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  // if 401, try to refresh token and retry once
+  if (response.status === 401) {
+    try {
+      accessToken = await refreshAccessToken();
+      // retry the request with new token
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    } catch (_refreshError) {
+      // if refresh fails, throw error that will prompt re-authentication
+      throw new Error(
+        "Authentication expired. Please reconnect your Google account."
+      );
+    }
+  }
+
+  return response;
 }
 
 // extract sheet ID from Google Sheets URL
@@ -140,17 +234,11 @@ export async function createSheet(name: string): Promise<string> {
     throw new Error("Device is offline. Cannot create sheet.");
   }
 
-  const accessToken = await getValidAccessToken();
-  if (!accessToken) {
-    throw new Error("Not authenticated. Please connect your Google account.");
-  }
-
-  const response = await fetch(
+  const response = await makeAuthenticatedRequest(
     "https://sheets.googleapis.com/v4/spreadsheets",
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -183,18 +271,11 @@ export async function verifySheetAccess(sheetId: string): Promise<boolean> {
     return false; // silent failure when offline
   }
 
-  const accessToken = await getValidAccessToken();
-  if (!accessToken) {
-    return false;
-  }
-
   try {
-    const response = await fetch(
+    const response = await makeAuthenticatedRequest(
       `${SHEETS_API_BASE}/${sheetId}?fields=spreadsheetId`,
       {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: {},
       }
     );
 
@@ -254,11 +335,6 @@ export async function syncTransactionsToSheet(
     throw new Error("No sheet configured. Please set up Google Sheets sync.");
   }
 
-  const accessToken = await getValidAccessToken();
-  if (!accessToken) {
-    throw new Error("Not authenticated. Please reconnect your Google account.");
-  }
-
   // prepare data - headers first, then transactions
   const values = prepareTransactionData(transactions);
 
@@ -267,10 +343,9 @@ export async function syncTransactionsToSheet(
   const range = `Transactions!A1:F${values.length}`;
   const url = `${SHEETS_API_BASE}/${config.sheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
 
-  const response = await fetch(url, {
+  const response = await makeAuthenticatedRequest(url, {
     method: "PUT",
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({

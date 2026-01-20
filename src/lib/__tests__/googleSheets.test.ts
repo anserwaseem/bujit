@@ -1,11 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   extractSheetId,
   validateSheetUrl,
   formatDate,
   prepareTransactionData,
+  syncTransactionsToSheet,
 } from "../googleSheets";
 import type { Transaction } from "../types";
+import * as storage from "../storage";
+import * as connectivity from "../connectivity";
 
 describe("googleSheets", () => {
   describe("formatDate", () => {
@@ -232,6 +235,239 @@ describe("googleSheets", () => {
 
       expect(result[1][0]).toBe("05/01/2024"); // padded
       expect(result[2][0]).toBe("25/12/2024"); // not padded
+    });
+  });
+
+  describe("token refresh on 401 error", () => {
+    const mockFetch = vi.fn();
+    const mockTokenClient = {
+      requestAccessToken: vi.fn(),
+    };
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      localStorage.clear();
+
+      // mock environment variable
+      vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "test-client-id");
+
+      // mock fetch globally
+      global.fetch = mockFetch;
+
+      // mock connectivity
+      vi.spyOn(connectivity, "isOnline").mockReturnValue(true);
+
+      // mock storage
+      vi.spyOn(storage, "getGoogleSheetsConfig").mockReturnValue({
+        accessToken: "expired-token",
+        refreshToken: "refresh-token",
+        sheetId: "test-sheet-id",
+        autoSync: false,
+      });
+      vi.spyOn(storage, "saveGoogleSheetsConfig").mockImplementation(() => {});
+
+      // mock Google Identity Services - set it up before script loading check
+      Object.defineProperty(global, "window", {
+        value: {
+          ...global.window,
+          google: {
+            accounts: {
+              oauth2: {
+                initTokenClient: vi.fn(() => mockTokenClient),
+              },
+              id: {
+                initialize: vi.fn(),
+              },
+            },
+          },
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      // mock script loading - immediately mark as loaded since we've already set up window.google
+      const originalCreateElement = document.createElement.bind(document);
+      vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+        if (tagName === "script") {
+          const script = originalCreateElement(tagName);
+          // immediately call onload to simulate script already loaded
+          // since window.google is already set up
+          if (script.onload) {
+            script.onload({} as Event);
+          }
+          return script;
+        }
+        return originalCreateElement(tagName);
+      });
+    });
+
+    it("should refresh token and retry request on 401 error", async () => {
+      const transactions: Transaction[] = [
+        {
+          id: "1",
+          date: "2024-01-15T12:00:00.000Z",
+          reason: "coffee",
+          amount: 100,
+          paymentMode: "Cash",
+          type: "expense",
+          necessity: null,
+        },
+      ];
+
+      const newAccessToken = "new-access-token";
+      let tokenClientCallback: (response: {
+        access_token: string;
+        refresh_token?: string;
+      }) => void;
+
+      // setup token client to immediately call callback when requestAccessToken is called
+      mockTokenClient.requestAccessToken = vi.fn(() => {
+        // immediately invoke callback with new token
+        if (tokenClientCallback!) {
+          tokenClientCallback({
+            access_token: newAccessToken,
+          });
+        }
+      });
+
+      // setup token client callback capture
+      vi.mocked(
+        global.window.google!.accounts!.oauth2!.initTokenClient
+      ).mockImplementation((config) => {
+        tokenClientCallback = config.callback as typeof tokenClientCallback;
+        return mockTokenClient;
+      });
+
+      // first call returns 401, second call succeeds
+      mockFetch
+        .mockResolvedValueOnce({
+          status: 401,
+          ok: false,
+          json: async () => ({
+            error: { message: "Invalid Credentials" },
+          }),
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          ok: true,
+          json: async () => ({}),
+        });
+
+      // execute sync (will trigger token refresh)
+      await syncTransactionsToSheet(transactions);
+
+      // verify fetch was called twice (initial + retry)
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      // verify first call used expired token
+      const firstCall = mockFetch.mock.calls[0];
+      expect(firstCall[0]).toContain("test-sheet-id");
+      expect(firstCall[1]?.headers).toMatchObject({
+        Authorization: "Bearer expired-token",
+      });
+
+      // verify token refresh was triggered
+      expect(mockTokenClient.requestAccessToken).toHaveBeenCalled();
+
+      // verify new token was saved
+      expect(storage.saveGoogleSheetsConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          accessToken: newAccessToken,
+        })
+      );
+
+      // verify second call used new token
+      const secondCall = mockFetch.mock.calls[1];
+      expect(secondCall[1]?.headers).toMatchObject({
+        Authorization: "Bearer new-access-token",
+      });
+    });
+
+    it("should throw error if token refresh fails", async () => {
+      const transactions: Transaction[] = [
+        {
+          id: "1",
+          date: "2024-01-15T12:00:00.000Z",
+          reason: "coffee",
+          amount: 100,
+          paymentMode: "Cash",
+          type: "expense",
+          necessity: null,
+        },
+      ];
+
+      let tokenClientCallback: (response: {
+        error: string;
+        error_description?: string;
+      }) => void;
+
+      // setup token client to immediately call callback with error when requestAccessToken is called
+      mockTokenClient.requestAccessToken = vi.fn(() => {
+        if (tokenClientCallback!) {
+          tokenClientCallback({
+            error: "invalid_grant",
+            error_description: "Token has been expired or revoked",
+          });
+        }
+      });
+
+      // setup token client callback capture
+      vi.mocked(
+        global.window.google!.accounts!.oauth2!.initTokenClient
+      ).mockImplementation((config) => {
+        tokenClientCallback = config.callback as typeof tokenClientCallback;
+        return mockTokenClient;
+      });
+
+      // first call returns 401
+      mockFetch.mockResolvedValueOnce({
+        status: 401,
+        ok: false,
+        json: async () => ({
+          error: { message: "Invalid Credentials" },
+        }),
+      });
+
+      // should throw error asking user to reconnect
+      await expect(syncTransactionsToSheet(transactions)).rejects.toThrow(
+        "Authentication expired. Please reconnect your Google account."
+      );
+
+      // verify fetch was only called once (no retry after failed refresh)
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockTokenClient.requestAccessToken).toHaveBeenCalled();
+    });
+
+    it("should not refresh token on non-401 errors", async () => {
+      const transactions: Transaction[] = [
+        {
+          id: "1",
+          date: "2024-01-15T12:00:00.000Z",
+          reason: "coffee",
+          amount: 100,
+          paymentMode: "Cash",
+          type: "expense",
+          necessity: null,
+        },
+      ];
+
+      // return 403 (Forbidden) instead of 401
+      mockFetch.mockResolvedValueOnce({
+        status: 403,
+        ok: false,
+        json: async () => ({
+          error: { message: "Permission denied" },
+        }),
+      });
+
+      // execute sync
+      await expect(syncTransactionsToSheet(transactions)).rejects.toThrow();
+
+      // verify fetch was only called once (no retry)
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      // verify token refresh was NOT triggered
+      expect(mockTokenClient.requestAccessToken).not.toHaveBeenCalled();
     });
   });
 });
