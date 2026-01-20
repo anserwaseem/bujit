@@ -39,3 +39,15 @@ export interface StreakData {
   lastNoExpenseDate: string | null; // ISO date string
   lastSpendingDate: string | null; // ISO date string
 }
+
+export interface DashboardCard {
+  id: string;
+  type: "stat" | "chart" | "insight";
+  order: number;
+  visible: boolean;
+}
+
+export interface DashboardLayout {
+  cards: DashboardCard[];
+  lastUpdated: string;
+}

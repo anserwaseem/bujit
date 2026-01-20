@@ -1,4 +1,10 @@
-import { Transaction, PaymentMode, AppSettings } from "./types";
+import {
+  Transaction,
+  PaymentMode,
+  AppSettings,
+  DashboardCard,
+  DashboardLayout,
+} from "./types";
 
 const TRANSACTIONS_KEY = "bujit_transactions";
 const MODES_KEY = "bujit_payment_modes";
@@ -159,5 +165,99 @@ export function saveGoogleSheetsConfig(
     localStorage.setItem(GOOGLE_SHEETS_CONFIG_KEY, JSON.stringify(config));
   } else {
     localStorage.removeItem(GOOGLE_SHEETS_CONFIG_KEY);
+  }
+}
+
+// Dashboard layout configuration
+const DASHBOARD_LAYOUT_KEY = "bujit_dashboard_layout";
+const DASHBOARD_LAYOUT_EVENT = "bujit:dashboard-layout-changed";
+
+// Default card order matching current Dashboard structure
+const DEFAULT_DASHBOARD_CARDS: DashboardCard[] = [
+  { id: "spent", type: "stat", order: 0, visible: true },
+  { id: "income", type: "stat", order: 1, visible: true },
+  { id: "savings", type: "stat", order: 2, visible: true },
+  { id: "this-week", type: "stat", order: 3, visible: true },
+  { id: "daily-avg", type: "stat", order: 4, visible: true },
+  { id: "avg-txn", type: "insight", order: 5, visible: true },
+  { id: "no-expense-streak", type: "insight", order: 6, visible: true },
+  { id: "spending-streak", type: "insight", order: 7, visible: true },
+  { id: "active-days", type: "insight", order: 8, visible: true },
+  { id: "most-frequent", type: "insight", order: 9, visible: true },
+  { id: "biggest-expense", type: "insight", order: 10, visible: true },
+  { id: "best-day", type: "insight", order: 11, visible: true },
+  { id: "worst-day", type: "insight", order: 12, visible: true },
+  { id: "daily-chart", type: "chart", order: 13, visible: true },
+  { id: "top-categories", type: "chart", order: 14, visible: true },
+  { id: "needs-wants", type: "chart", order: 15, visible: true },
+  { id: "payment-mode", type: "chart", order: 16, visible: true },
+  { id: "monthly-trend", type: "chart", order: 17, visible: true },
+  { id: "last-month", type: "stat", order: 18, visible: true },
+];
+
+function notifyDashboardLayoutChanged() {
+  // In SSR/tests `window` may not exist.
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(DASHBOARD_LAYOUT_EVENT));
+}
+
+function normalizeDashboardLayoutOrder(
+  cards: DashboardCard[]
+): DashboardCard[] {
+  // Ensure a stable, gap-free order after merges/migrations.
+  const sorted = [...cards].sort((a, b) => a.order - b.order);
+  return sorted.map((c, idx) => ({ ...c, order: idx }));
+}
+
+export function getDashboardLayout(): DashboardCard[] {
+  try {
+    const data = localStorage.getItem(DASHBOARD_LAYOUT_KEY);
+    if (!data) return DEFAULT_DASHBOARD_CARDS;
+
+    const parsed: DashboardLayout = JSON.parse(data);
+    if (!parsed.cards || !Array.isArray(parsed.cards)) {
+      return DEFAULT_DASHBOARD_CARDS;
+    }
+
+    // Validate and merge with defaults (in case new cards were added)
+    const savedIds = new Set(parsed.cards.map((c: DashboardCard) => c.id));
+    const defaultCards = DEFAULT_DASHBOARD_CARDS.map((card) => {
+      const saved = parsed.cards.find((c: DashboardCard) => c.id === card.id);
+      return saved || card;
+    });
+
+    // Add any new default cards that weren't in saved layout
+    DEFAULT_DASHBOARD_CARDS.forEach((card) => {
+      if (!savedIds.has(card.id)) {
+        defaultCards.push(card);
+      }
+    });
+
+    return normalizeDashboardLayoutOrder(defaultCards);
+  } catch (error) {
+    console.error("Error loading dashboard layout:", error);
+    return DEFAULT_DASHBOARD_CARDS;
+  }
+}
+
+export function saveDashboardLayout(cards: DashboardCard[]): void {
+  try {
+    const layout: DashboardLayout = {
+      cards: normalizeDashboardLayoutOrder(cards),
+      lastUpdated: new Date().toISOString(),
+    };
+    localStorage.setItem(DASHBOARD_LAYOUT_KEY, JSON.stringify(layout));
+    notifyDashboardLayoutChanged();
+  } catch (error) {
+    console.error("Error saving dashboard layout:", error);
+  }
+}
+
+export function resetDashboardLayout(): void {
+  try {
+    localStorage.removeItem(DASHBOARD_LAYOUT_KEY);
+    notifyDashboardLayoutChanged();
+  } catch (error) {
+    console.error("Error resetting dashboard layout:", error);
   }
 }

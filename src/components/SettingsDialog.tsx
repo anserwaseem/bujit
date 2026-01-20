@@ -21,6 +21,7 @@ import {
   downloadFile,
 } from "@/lib/csv";
 import { GoogleSheetsSync } from "@/components/GoogleSheetsSync";
+import { resetDashboardLayout } from "@/lib/storage";
 
 interface SettingsDialogProps {
   settings: AppSettings;
@@ -138,6 +139,14 @@ export function SettingsDialog({
       description: "Checking for updates. Your data is preserved.",
     });
     await safeUpdate();
+  };
+
+  const handleResetDashboardLayout = () => {
+    resetDashboardLayout();
+    toast({
+      title: "Dashboard Reset",
+      description: "Your dashboard layout has been reset to default.",
+    });
   };
 
   const handleDownloadTemplate = () => {
@@ -405,6 +414,23 @@ export function SettingsDialog({
                 </button>
                 <p className="text-xs text-muted-foreground mt-2">
                   Checks for updates and reloads. Your data is preserved.
+                </p>
+              </div>
+
+              {/* Dashboard Layout Section */}
+              <div className="border-t border-border pt-6">
+                <h3 className="text-sm font-medium mb-3">Dashboard</h3>
+                <button
+                  type="button"
+                  onClick={handleResetDashboardLayout}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium
+                             bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Reset Dashboard Layout
+                </button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Restores the default card order and sizing.
                 </p>
               </div>
             </div>
