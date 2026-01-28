@@ -547,7 +547,7 @@ export function buildDashboardCards(
                     </div>
                     <div className="h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all duration-500"
+                        className="h-full rounded-full transition-all duration-700 ease-out"
                         style={{
                           width: `${percentage}%`,
                           backgroundColor:
@@ -560,7 +560,18 @@ export function buildDashboardCards(
               })}
             </div>
           </div>
-        ) : null,
+        ) : (
+          <div className="bg-card border border-border rounded-xl p-3 sm:p-4">
+            <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 sm:mb-4">
+              Top Spending
+            </h3>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                No spending data available
+              </p>
+            </div>
+          </div>
+        ),
     },
     "needs-wants": {
       id: "needs-wants",
@@ -634,7 +645,18 @@ export function buildDashboardCards(
               </div>
             </div>
           </div>
-        ) : null,
+        ) : (
+          <div className="bg-card border border-border rounded-xl p-3 sm:p-4">
+            <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 sm:mb-4">
+              Needs vs Wants
+            </h3>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                No expense data available
+              </p>
+            </div>
+          </div>
+        ),
     },
     "payment-mode": {
       id: "payment-mode",
@@ -741,7 +763,18 @@ export function buildDashboardCards(
               </ResponsiveContainer>
             </div>
           </div>
-        ) : null;
+        ) : (
+          <div className="bg-card border border-border rounded-xl p-3 sm:p-4">
+            <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 sm:mb-4">
+              By Payment Mode
+            </h3>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                No payment data available
+              </p>
+            </div>
+          </div>
+        );
       },
     },
     "monthly-trend": {

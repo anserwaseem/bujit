@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { X } from "lucide-react";
+import { X, SearchX } from "lucide-react";
 import type { Transaction, NecessityType, AppSettings } from "@/lib/types";
 import { TransactionList } from "./TransactionList";
 import { startOfDay, endOfDay } from "date-fns";
@@ -119,7 +119,15 @@ export function FilteredTransactionsDialog({
   }, [filteredTransactions]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fade-in"
+      onClick={(e) => {
+        // Close dialog when clicking backdrop
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl animate-scale-in max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
           <h2 className="text-lg font-semibold truncate">{dialogTitle}</h2>
@@ -132,7 +140,12 @@ export function FilteredTransactionsDialog({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
+        <div
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4"
+          style={{
+            WebkitOverflowScrolling: "touch", // Smooth scrolling on iOS
+          }}
+        >
           {filteredTransactions.length > 0 ? (
             <TransactionList
               groupedTransactions={groupedTransactions}
@@ -144,9 +157,16 @@ export function FilteredTransactionsDialog({
               onDuplicate={onDuplicate}
             />
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-muted-foreground text-sm">
-                No transactions match the selected filter
+            <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
+              <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                <SearchX className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground mb-2">
+                No transactions found
+              </h3>
+              <p className="text-sm text-muted-foreground max-w-[280px]">
+                No transactions match the selected filter. Try adjusting your
+                filters or date range.
               </p>
             </div>
           )}
