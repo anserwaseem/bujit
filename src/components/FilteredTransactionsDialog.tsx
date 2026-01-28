@@ -125,7 +125,8 @@ export function FilteredTransactionsDialog({
           <h2 className="text-lg font-semibold truncate">{dialogTitle}</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex-shrink-0"
+            className="p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted active:bg-muted/80 active:opacity-70 transition-colors flex-shrink-0 touch-manipulation select-none min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>

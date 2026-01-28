@@ -28,7 +28,8 @@ export function InsightCard({
           onClick={onLabelClick}
           className={cn(
             "text-[10px] sm:text-xs uppercase tracking-wider",
-            onLabelClick && "cursor-pointer hover:text-foreground transition-colors"
+            onLabelClick &&
+              "cursor-pointer hover:text-foreground active:text-foreground active:opacity-70 transition-colors select-none py-0.5 -my-0.5 px-1 -mx-1 rounded"
           )}
         >
           {label}

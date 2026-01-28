@@ -40,6 +40,7 @@ import { InsightCard } from "../cards/InsightCard";
 import { MODE_COLORS, CATEGORY_COLORS } from "../constants";
 import type { AdditionalFilterCriteria } from "@/components/FilteredTransactionsDialog";
 import { getWeekStart, getWeekEnd } from "../hooks/analytics/helpers";
+import { haptic } from "@/lib/utils";
 
 interface BuildCtx {
   analytics: DashboardAnalytics;
@@ -259,14 +260,15 @@ export function buildDashboardCards(
             <div className="flex items-center gap-1.5 text-muted-foreground mb-1.5">
               <Repeat className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
               <span
-                onClick={() =>
+                onClick={() => {
+                  haptic("light");
                   onOpenFilteredTransactions(
                     { searchQuery: analytics.mostFrequentCategory[0] },
                     `Most Frequent - ${maskReason(analytics.mostFrequentCategory[0])}`
-                  )
-                }
+                  );
+                }}
                 className={cn(
-                  "text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                  "text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer hover:text-foreground active:text-foreground active:opacity-70 transition-colors select-none py-0.5 -my-0.5 px-1 -mx-1 rounded"
                 )}
               >
                 Most Frequent
@@ -291,14 +293,15 @@ export function buildDashboardCards(
             <div className="flex items-center gap-1.5 text-muted-foreground mb-2">
               <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
               <span
-                onClick={() =>
+                onClick={() => {
+                  haptic("light");
                   onOpenFilteredTransactions(
                     { searchQuery: analytics.biggestExpense?.reason || "" },
                     `Biggest Expense - ${maskReason(analytics.biggestExpense.reason || "Unknown")}`
-                  )
-                }
+                  );
+                }}
                 className={cn(
-                  "text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors"
+                  "text-[10px] sm:text-xs uppercase tracking-wider cursor-pointer hover:text-foreground active:text-foreground active:opacity-70 transition-colors select-none py-0.5 -my-0.5 px-1 -mx-1 rounded"
                 )}
               >
                 Biggest Expense
@@ -327,6 +330,7 @@ export function buildDashboardCards(
           <div className="bg-card border border-border rounded-xl p-3 sm:p-4">
             <p
               onClick={() => {
+                haptic("light");
                 const dayDate = new Date(analytics.bestDay[0]);
                 const dayStart = startOfDay(dayDate);
                 const dayEnd = endOfDay(dayDate);
@@ -335,7 +339,7 @@ export function buildDashboardCards(
                   `Best Day - ${format(dayDate, "MMM d")} - Transactions`
                 );
               }}
-              className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1 cursor-pointer hover:text-foreground transition-colors"
+              className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1 cursor-pointer hover:text-foreground active:text-foreground active:opacity-70 transition-colors select-none py-0.5 -my-0.5 px-1 -mx-1 rounded"
             >
               Best Day
             </p>
@@ -356,6 +360,7 @@ export function buildDashboardCards(
           <div className="bg-card border border-border rounded-xl p-3 sm:p-4">
             <p
               onClick={() => {
+                haptic("light");
                 const dayDate = new Date(analytics.worstDay[0]);
                 const dayStart = startOfDay(dayDate);
                 const dayEnd = endOfDay(dayDate);
@@ -364,7 +369,7 @@ export function buildDashboardCards(
                   `Worst Day - ${format(dayDate, "MMM d")} - Transactions`
                 );
               }}
-              className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1 cursor-pointer hover:text-foreground transition-colors"
+              className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1 cursor-pointer hover:text-foreground active:text-foreground active:opacity-70 transition-colors select-none py-0.5 -my-0.5 px-1 -mx-1 rounded"
             >
               Worst Day
             </p>
@@ -399,8 +404,26 @@ export function buildDashboardCards(
           const dayStart = startOfDay(dayData.date);
           const dayEnd = endOfDay(dayData.date);
 
+          const handleClick = () => {
+            haptic("light");
+            onOpenFilteredTransactions(
+              { dateRange: { start: dayStart, end: dayEnd } },
+              `Last 7 Days - ${payload.value} - Transactions`
+            );
+          };
+
           return (
             <g transform={`translate(${x},${y})`}>
+              {/* Invisible larger tap target area for iPhone - 44x44pt minimum */}
+              <rect
+                x={-22}
+                y={-8}
+                width={44}
+                height={44}
+                fill="transparent"
+                className="cursor-pointer"
+                onClick={handleClick}
+              />
               <text
                 x={0}
                 y={0}
@@ -408,13 +431,7 @@ export function buildDashboardCards(
                 textAnchor="middle"
                 fill="hsl(var(--muted-foreground))"
                 fontSize={10}
-                className="cursor-pointer hover:fill-foreground transition-colors"
-                onClick={() =>
-                  onOpenFilteredTransactions(
-                    { dateRange: { start: dayStart, end: dayEnd } },
-                    `Last 7 Days - ${payload.value} - Transactions`
-                  )
-                }
+                className="pointer-events-none select-none"
               >
                 {payload.value}
               </text>
@@ -513,13 +530,14 @@ export function buildDashboardCards(
                   <div key={cat.name}>
                     <div className="flex items-center justify-between mb-1 gap-2">
                       <span
-                        onClick={() =>
+                        onClick={() => {
+                          haptic("light");
                           onOpenFilteredTransactions(
                             { searchQuery: cat.name },
                             `Top Spending - ${maskReason(cat.name)}`
-                          )
-                        }
-                        className="text-xs sm:text-sm font-medium capitalize truncate flex-1 cursor-pointer hover:text-foreground transition-colors"
+                          );
+                        }}
+                        className="text-xs sm:text-sm font-medium capitalize truncate flex-1 cursor-pointer hover:text-foreground active:text-foreground active:opacity-70 transition-colors select-none py-1 -my-1 px-1 -mx-1 rounded"
                       >
                         {maskReason(cat.name)}
                       </span>
@@ -595,13 +613,14 @@ export function buildDashboardCards(
                           style={{ backgroundColor: item.color }}
                         />
                         <span
-                          onClick={() =>
+                          onClick={() => {
+                            haptic("light");
                             onOpenFilteredTransactions(
                               { necessity },
                               `Needs vs Wants - ${maskReason(item.name)}`
-                            )
-                          }
-                          className="text-xs sm:text-sm truncate cursor-pointer hover:text-foreground transition-colors"
+                            );
+                          }}
+                          className="text-xs sm:text-sm truncate cursor-pointer hover:text-foreground active:text-foreground active:opacity-70 transition-colors select-none py-1 -my-1 px-1 -mx-1 rounded"
                         >
                           {maskReason(item.name)}
                         </span>
@@ -636,11 +655,13 @@ export function buildDashboardCards(
 
           // Use fixed x position (0) for left alignment, so all labels start at the same point
           // Add larger tap target area with transparent rectangle for better mobile UX
-          const handleClick = () =>
+          const handleClick = () => {
+            haptic("light");
             onOpenFilteredTransactions(
               { searchQuery: payload.value },
               `By Payment Mode - ${payload.value}`
             );
+          };
 
           return (
             <g transform={`translate(0,${y})`}>
@@ -747,8 +768,26 @@ export function buildDashboardCards(
           const monthStart = startOfDay(monthData.monthStart);
           const monthEnd = endOfDay(monthData.monthEnd);
 
+          const handleClick = () => {
+            haptic("light");
+            onOpenFilteredTransactions(
+              { dateRange: { start: monthStart, end: monthEnd } },
+              `6 Month Overview - ${payload.value} - Transactions`
+            );
+          };
+
           return (
             <g transform={`translate(${x},${y})`}>
+              {/* Invisible larger tap target area for iPhone - 44x44pt minimum */}
+              <rect
+                x={-22}
+                y={-8}
+                width={44}
+                height={44}
+                fill="transparent"
+                className="cursor-pointer"
+                onClick={handleClick}
+              />
               <text
                 x={0}
                 y={0}
@@ -756,13 +795,7 @@ export function buildDashboardCards(
                 textAnchor="middle"
                 fill="hsl(var(--muted-foreground))"
                 fontSize={10}
-                className="cursor-pointer hover:fill-foreground transition-colors"
-                onClick={() =>
-                  onOpenFilteredTransactions(
-                    { dateRange: { start: monthStart, end: monthEnd } },
-                    `6 Month Overview - ${payload.value} - Transactions`
-                  )
-                }
+                className="pointer-events-none select-none"
               >
                 {payload.value}
               </text>
