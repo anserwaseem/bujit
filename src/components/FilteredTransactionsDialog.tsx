@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { X, SearchX } from "lucide-react";
 import type { Transaction, NecessityType, AppSettings } from "@/lib/types";
 import { TransactionList } from "./TransactionList";
@@ -91,6 +91,8 @@ export function FilteredTransactionsDialog({
   onDuplicate,
   onClose,
 }: FilteredTransactionsDialogProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   // Apply additional filter to already-filtered transactions
   const filteredTransactions = useMemo(() => {
     if (!additionalFilter) return transactions;
@@ -141,6 +143,7 @@ export function FilteredTransactionsDialog({
         </div>
 
         <div
+          ref={scrollContainerRef}
           className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4"
           style={{
             WebkitOverflowScrolling: "touch", // Smooth scrolling on iOS
@@ -155,6 +158,7 @@ export function FilteredTransactionsDialog({
               onEdit={onEdit}
               onUpdateNecessity={onUpdateNecessity}
               onDuplicate={onDuplicate}
+              scrollContainerRef={scrollContainerRef}
             />
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">

@@ -32,6 +32,7 @@ interface TransactionListProps {
   onEdit: (transaction: Transaction) => void;
   onUpdateNecessity: (id: string, necessity: NecessityType) => void;
   onDuplicate?: (transaction: Transaction) => Transaction | void;
+  scrollContainerRef?: React.RefObject<HTMLDivElement>; // Optional ref to scroll container (for dialogs)
 }
 
 // Animated empty state tips
@@ -53,6 +54,7 @@ export function TransactionList({
   onEdit,
   onUpdateNecessity,
   onDuplicate,
+  scrollContainerRef,
 }: TransactionListProps) {
   const [tipIndex, setTipIndex] = useState(0);
   const [groupMode, setGroupMode] = useState<GroupMode>("day");
@@ -75,14 +77,22 @@ export function TransactionList({
     return () => clearInterval(interval);
   }, [groupedTransactions.length]);
 
-  // Scroll to top visibility
+  // Scroll to top visibility - use container if provided, otherwise window
   useEffect(() => {
+    const container = scrollContainerRef?.current;
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
+      const scrollTop = container?.scrollTop ?? window.scrollY;
+      setShowScrollTop(scrollTop > 200);
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+
+    (container ?? window).addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
+
+    return () => {
+      (container ?? window).removeEventListener("scroll", handleScroll);
+    };
+  }, [scrollContainerRef]);
 
   // Infinite scroll with Intersection Observer
   const loadMore = useCallback(() => {
@@ -113,8 +123,11 @@ export function TransactionList({
   }, [groupedTransactions]);
 
   const scrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+    (scrollContainerRef?.current ?? window).scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [scrollContainerRef]);
 
   // Regroup transactions based on mode
   const regroupedTransactions = useMemo(() => {
@@ -308,7 +321,11 @@ export function TransactionList({
                           onClick={(e) => e.stopPropagation()}
                         >
                           {settings.privacyMode?.hideAmounts
-                            ? formatMaskedAmount(Math.abs(groupNet), settings, currencySymbol)
+                            ? formatMaskedAmount(
+                                Math.abs(groupNet),
+                                settings,
+                                currencySymbol
+                              )
                             : `${groupNet >= 0 ? "+" : ""}${currencySymbol}${formatAmount(Math.abs(groupNet))}`}
                         </span>
                       </PopoverTrigger>
@@ -320,7 +337,11 @@ export function TransactionList({
                             </span>
                             <span className="text-sm font-mono font-medium text-income">
                               {settings.privacyMode?.hideAmounts
-                                ? formatMaskedAmount(groupIncome, settings, currencySymbol)
+                                ? formatMaskedAmount(
+                                    groupIncome,
+                                    settings,
+                                    currencySymbol
+                                  )
                                 : `+${currencySymbol}${formatAmount(groupIncome)}`}
                             </span>
                           </div>
@@ -330,7 +351,11 @@ export function TransactionList({
                             </span>
                             <span className="text-sm font-mono font-medium text-expense">
                               {settings.privacyMode?.hideAmounts
-                                ? formatMaskedAmount(groupExpense, settings, currencySymbol)
+                                ? formatMaskedAmount(
+                                    groupExpense,
+                                    settings,
+                                    currencySymbol
+                                  )
                                 : `−${currencySymbol}${formatAmount(groupExpense)}`}
                             </span>
                           </div>
@@ -346,7 +371,11 @@ export function TransactionList({
                               )}
                             >
                               {settings.privacyMode?.hideAmounts
-                                ? formatMaskedAmount(Math.abs(groupNet), settings, currencySymbol)
+                                ? formatMaskedAmount(
+                                    Math.abs(groupNet),
+                                    settings,
+                                    currencySymbol
+                                  )
                                 : `${groupNet >= 0 ? "+" : ""}${currencySymbol}${formatAmount(Math.abs(groupNet))}`}
                             </span>
                           </div>
@@ -361,7 +390,11 @@ export function TransactionList({
                       )}
                     >
                       {settings.privacyMode?.hideAmounts
-                        ? formatMaskedAmount(Math.abs(groupNet), settings, currencySymbol)
+                        ? formatMaskedAmount(
+                            Math.abs(groupNet),
+                            settings,
+                            currencySymbol
+                          )
                         : `${groupNet >= 0 ? "+" : ""}${currencySymbol}${formatAmount(Math.abs(groupNet))}`}
                     </span>
                   )}
@@ -412,9 +445,12 @@ export function TransactionList({
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-24 right-6 w-10 h-10 rounded-full bg-muted/90 backdrop-blur-sm 
-                     border border-border shadow-lg hover:bg-muted transition-all 
-                     flex items-center justify-center z-40 animate-fade-in"
+          className={cn(
+            "w-10 h-10 rounded-full bg-muted/90 backdrop-blur-sm border border-border shadow-lg hover:bg-muted transition-all flex items-center justify-center animate-fade-in touch-manipulation select-none",
+            scrollContainerRef
+              ? "absolute bottom-4 right-4 z-10"
+              : "fixed bottom-4 right-4 z-40"
+          )}
           aria-label="Scroll to top"
         >
           <ChevronUp className="w-5 h-5 text-foreground" />
