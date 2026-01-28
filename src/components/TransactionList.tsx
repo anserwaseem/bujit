@@ -2,14 +2,7 @@ import { Transaction, NecessityType, AppSettings } from "@/lib/types";
 import { TransactionCard } from "./TransactionCard";
 import { getRelativeDate, formatAmount } from "@/lib/parser";
 import { formatMaskedAmount } from "@/lib/privacy";
-import {
-  Receipt,
-  Sparkles,
-  TrendingUp,
-  Zap,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Receipt, Sparkles, TrendingUp, Zap, ChevronDown } from "lucide-react";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Collapsible,
@@ -23,6 +16,8 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useScrollIndicators } from "@/hooks/useScrollIndicators";
+import { ScrollIndicators } from "@/components/ScrollIndicators";
 
 interface TransactionListProps {
   groupedTransactions: [string, { transactions: Transaction[] }][];
@@ -62,9 +57,13 @@ export function TransactionList({
 
   // Virtualization
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
-  const [showScrollTop, setShowScrollTop] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Use reusable scroll indicators hook
+  const scrollIndicators = useScrollIndicators({
+    scrollContainerRef,
+  });
 
   // Rotate tips every 4 seconds
   useEffect(() => {
@@ -76,23 +75,6 @@ export function TransactionList({
 
     return () => clearInterval(interval);
   }, [groupedTransactions.length]);
-
-  // Scroll to top visibility - use container if provided, otherwise window
-  useEffect(() => {
-    const container = scrollContainerRef?.current;
-    const handleScroll = () => {
-      const scrollTop = container?.scrollTop ?? window.scrollY;
-      setShowScrollTop(scrollTop > 200);
-    };
-
-    (container ?? window).addEventListener("scroll", handleScroll, {
-      passive: true,
-    });
-
-    return () => {
-      (container ?? window).removeEventListener("scroll", handleScroll);
-    };
-  }, [scrollContainerRef]);
 
   // Infinite scroll with Intersection Observer
   const loadMore = useCallback(() => {
@@ -121,13 +103,6 @@ export function TransactionList({
   useEffect(() => {
     setVisibleCount(ITEMS_PER_PAGE);
   }, [groupedTransactions]);
-
-  const scrollToTop = useCallback(() => {
-    (scrollContainerRef?.current ?? window).scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }, [scrollContainerRef]);
 
   // Regroup transactions based on mode
   const regroupedTransactions = useMemo(() => {
@@ -441,21 +416,11 @@ export function TransactionList({
         )}
       </div>
 
-      {/* Scroll to Top Button */}
-      {showScrollTop && (
-        <button
-          onClick={scrollToTop}
-          className={cn(
-            "w-10 h-10 rounded-full bg-muted/90 backdrop-blur-sm border border-border shadow-lg hover:bg-muted transition-all flex items-center justify-center animate-fade-in touch-manipulation select-none",
-            scrollContainerRef
-              ? "absolute bottom-4 right-4 z-10"
-              : "fixed bottom-4 right-4 z-40"
-          )}
-          aria-label="Scroll to top"
-        >
-          <ChevronUp className="w-5 h-5 text-foreground" />
-        </button>
-      )}
+      {/* Scroll Indicators */}
+      <ScrollIndicators
+        indicators={scrollIndicators}
+        isInContainer={!!scrollContainerRef}
+      />
     </div>
   );
 }

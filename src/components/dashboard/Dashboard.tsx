@@ -11,6 +11,8 @@ import { DashboardSortableGrid } from "./dnd/DashboardSortableGrid";
 import type { DashboardCardId, DashboardCardSpec } from "./types";
 import { buildDashboardCards } from "./registry/buildDashboardCards";
 import type { AdditionalFilterCriteria } from "@/components/FilteredTransactionsDialog";
+import { useScrollIndicators } from "@/hooks/useScrollIndicators";
+import { ScrollIndicators } from "@/components/ScrollIndicators";
 
 interface DashboardProps {
   transactions: Transaction[]; // Filtered transactions
@@ -88,14 +90,20 @@ export function Dashboard({
   // Only show cards that exist in registry (defensive against old layouts)
   const visibleIds = orderedIds.filter((id) => Boolean(cards[id]));
 
+  // Scroll indicators for dashboard
+  const scrollIndicators = useScrollIndicators();
+
   return (
-    <div className="space-y-4 animate-fade-in">
-      <DashboardSortableGrid
-        ids={visibleIds}
-        isFullWidth={isFullWidth}
-        renderCard={renderCard}
-        onReorder={onReorder}
-      />
-    </div>
+    <>
+      <ScrollIndicators indicators={scrollIndicators} />
+      <div className="space-y-4 animate-fade-in">
+        <DashboardSortableGrid
+          ids={visibleIds}
+          isFullWidth={isFullWidth}
+          renderCard={renderCard}
+          onReorder={onReorder}
+        />
+      </div>
+    </>
   );
 }
