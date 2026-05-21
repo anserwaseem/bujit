@@ -99,6 +99,33 @@ describe("mathEval", () => {
       // The regex allows minus, but negative numbers alone should fail (result <= 0)
       expect(evaluateMathExpression("-100")).toBeNull();
     });
+
+    // Percent shorthand
+    describe("percent shorthand", () => {
+      it("should add percentage of base", () => {
+        expect(evaluateMathExpression("2400+10%")).toBe(2640);
+        expect(evaluateMathExpression("100+50%")).toBe(150);
+      });
+
+      it("should subtract percentage of base", () => {
+        expect(evaluateMathExpression("850-15%")).toBe(722.5);
+        expect(evaluateMathExpression("200-25%")).toBe(150);
+      });
+
+      it("should support decimal percentages", () => {
+        expect(evaluateMathExpression("100+12.5%")).toBe(112.5);
+      });
+
+      it("should chain percent operations left-to-right", () => {
+        // 100 +5% = 105, then 105 +2% = 107.1
+        expect(evaluateMathExpression("100+5%+2%")).toBe(107.1);
+      });
+
+      it("should reject lone percent sign", () => {
+        expect(evaluateMathExpression("%50")).toBeNull();
+        expect(evaluateMathExpression("50%")).toBeNull();
+      });
+    });
   });
 
   describe("hasOperators", () => {
