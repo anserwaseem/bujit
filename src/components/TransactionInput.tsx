@@ -13,6 +13,8 @@ import { parseInput } from "@/lib/parser";
 import { PaymentMode, Transaction, NecessityType } from "@/lib/types";
 import { cn, haptic } from "@/lib/utils";
 import { hasOperators, formatEvaluatedAmount } from "@/lib/mathEval";
+import { detectAnomaly } from "@/lib/anomaly";
+import { AlertTriangle } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -51,6 +53,9 @@ export function TransactionInput({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [showAutoComplete, setShowAutoComplete] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
+  const [dismissedAnomalyKey, setDismissedAnomalyKey] = useState<string | null>(
+    null
+  );
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dateSwipeRef = useRef<HTMLButtonElement>(null);
@@ -113,6 +118,25 @@ export function TransactionInput({
     () => parseInput(input, paymentModes),
     [input, paymentModes]
   );
+
+  // Anomaly detection - only for expenses with a valid parse
+  const anomaly = useMemo(() => {
+    if (isIncome || !parsed.isValid || !parsed.amount) return null;
+    return detectAnomaly(
+      {
+        reason: parsed.reason,
+        paymentMode: parsed.paymentMode,
+        amount: parsed.amount,
+      },
+      transactions
+    );
+  }, [isIncome, parsed, transactions]);
+
+  const anomalyKey = anomaly
+    ? `${anomaly.reason}_${anomaly.paymentMode}_${parsed.amount}`
+    : null;
+  const showAnomalyBanner =
+    !!anomaly && anomaly.isAnomalous && anomalyKey !== dismissedAnomalyKey;
 
   // Auto-suggest necessity when reason is parsed
   useEffect(() => {
