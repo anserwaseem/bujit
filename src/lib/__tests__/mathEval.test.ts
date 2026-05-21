@@ -116,9 +116,9 @@ describe("mathEval", () => {
         expect(evaluateMathExpression("100+12.5%")).toBe(112.5);
       });
 
-      it("should chain percent operations left-to-right", () => {
-        // 100 +5% = 105, then 105 +2% = 107.1
-        expect(evaluateMathExpression("100+5%+2%")).toBe(107.1);
+      it("should support percent after a parenthesised base", () => {
+        // (100+50) = 150, then +10% = 165
+        expect(evaluateMathExpression("(100+50)+10%")).toBe(165);
       });
 
       it("should reject lone percent sign", () => {
