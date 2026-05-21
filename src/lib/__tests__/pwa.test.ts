@@ -38,7 +38,7 @@ class MockServiceWorkerRegistrationClass implements ServiceWorkerRegistration {
     subscribe: vi.fn().mockResolvedValue(undefined),
     unsubscribe: vi.fn().mockResolvedValue(undefined),
     getSubscriptions: vi.fn().mockResolvedValue([]),
-  } as unknown;
+  } as unknown as CookieStoreManager;
   scope = "";
   updateViaCache = "imports" as ServiceWorkerUpdateViaCache;
   addEventListener = vi.fn();

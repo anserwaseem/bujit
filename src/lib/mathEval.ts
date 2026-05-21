@@ -4,8 +4,35 @@
  * Returns null for invalid expressions
  */
 
-const MATH_EXPRESSION_REGEX = /^[\d\s+\-*/().]+$/;
+const MATH_EXPRESSION_REGEX = /^[\d\s+\-*/().%]+$/;
 const MAX_EXPRESSION_LENGTH = 50;
+
+/**
+ * Expand percent shorthand patterns into explicit arithmetic.
+ * Examples:
+ *   "2400+10%"  -> "2400+(2400*10/100)"
+ *   "850-15%"   -> "850-(850*15/100)"
+ *   "100+5%+2%" -> applied left-to-right; each % uses the running base before it
+ * A "%" not preceded by `+`/`-` after a number is rejected (returns input as-is,
+ * letting the strict regex below fail it).
+ */
+function expandPercentShorthand(expr: string): string {
+  // Match: <base><op:+|-><pct>% where base/pct can be decimals or parenthesised
+  // We repeatedly apply the leftmost match so chained "+5%-2%" works.
+  const PCT_RE = /(\d+(?:\.\d+)?|\([^()]*\))\s*([+\-])\s*(\d+(?:\.\d+)?)%/;
+  let out = expr;
+  // Cap iterations to avoid pathological loops.
+  for (let i = 0; i < 10; i++) {
+    const next = out.replace(
+      PCT_RE,
+      (_m, base: string, op: string, pct: string) =>
+        `(${base}${op}(${base}*${pct}/100))`
+    );
+    if (next === out) break;
+    out = next;
+  }
+  return out;
+}
 
 export function evaluateMathExpression(expr: string): number | null {
   const trimmed = expr.trim();
@@ -16,19 +43,26 @@ export function evaluateMathExpression(expr: string): number | null {
   // Check length limit
   if (trimmed.length > MAX_EXPRESSION_LENGTH) return null;
 
-  // Only allow valid math characters
+  // Only allow valid math characters (incl. %)
   if (!MATH_EXPRESSION_REGEX.test(trimmed)) return null;
 
-  // Check for empty parentheses or invalid patterns
-  if (/\(\s*\)/.test(trimmed)) return null;
+  // Expand percent shorthand into plain arithmetic, then strip any leftover %.
+  // If a % remains after expansion (e.g. malformed like "%50"), reject.
+  const expanded = expandPercentShorthand(trimmed);
+  if (expanded.includes("%")) return null;
 
-  // Check for consecutive operators (except minus for negative numbers)
+  // Check for empty parentheses or invalid patterns
+  if (/\(\s*\)/.test(expanded)) return null;
+
+  // Check for consecutive operators (except minus for negative numbers).
+  // Use the original (pre-expansion) string so we don't false-trigger on
+  // generated parens like "+(base*pct/100)".
   if (/[+*/]{2,}|[+*/]-{2,}/.test(trimmed)) return null;
 
   try {
     // Use Function constructor for safe evaluation (no access to globals)
     // This is safer than eval() as it creates a new scope
-    const result = new Function(`"use strict"; return (${trimmed})`)();
+    const result = new Function(`"use strict"; return (${expanded})`)();
 
     // Validate result
     if (typeof result !== "number" || !isFinite(result)) return null;
