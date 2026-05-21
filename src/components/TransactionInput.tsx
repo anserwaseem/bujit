@@ -476,6 +476,30 @@ export function TransactionInput({
             </div>
           </div>
 
+          {/* Anomaly banner - only for expenses with enough history */}
+          {showAnomalyBanner && anomaly && (
+            <button
+              type="button"
+              onClick={() => setDismissedAnomalyKey(anomalyKey)}
+              className="mt-4 w-full flex items-start gap-2 p-3 rounded-lg bg-want/10 border border-want/30 text-left hover:bg-want/15 transition-colors"
+              title="Tap to dismiss"
+            >
+              <AlertTriangle className="w-4 h-4 text-want shrink-0 mt-0.5" />
+              <div className="flex-1 text-xs">
+                <p className="text-want font-medium">
+                  {anomaly.factor.toFixed(1)}× your usual{" "}
+                  <span className="capitalize">{anomaly.reason}</span> on{" "}
+                  {anomaly.paymentMode}
+                </p>
+                <p className="text-muted-foreground mt-0.5">
+                  Avg {currencySymbol}
+                  {Math.round(anomaly.mean).toLocaleString("en-PK")} over last{" "}
+                  {anomaly.sampleSize} entries · tap to dismiss
+                </p>
+              </div>
+            </button>
+          )}
+
           {/* Necessity Pills - only for expenses */}
           {!isIncome && (
             <div className="flex gap-2 mt-4 pt-4 border-t border-border">
