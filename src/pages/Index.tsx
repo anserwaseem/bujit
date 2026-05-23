@@ -295,6 +295,7 @@ const IndexContent = () => {
           onClose={() => setShowSettings(false)}
           recurring={recurring}
           paymentModesList={paymentModes}
+          goals={goals}
         />
       )}
 

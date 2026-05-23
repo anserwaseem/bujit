@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { processDueRecurring, nextFireDate } from "../recurring";
+import {
+  processDueRecurring,
+  nextFireDate,
+  monthlyStartDate,
+  describeRecurringSchedule,
+} from "../recurring";
 import type { RecurringRule } from "../types";
 
 function rule(over: Partial<RecurringRule> = {}): RecurringRule {
@@ -58,5 +63,43 @@ describe("processDueRecurring", () => {
     });
     const next = nextFireDate(r);
     expect(next.getUTCDate()).toBe(2);
+  });
+});
+
+describe("monthlyStartDate", () => {
+  it("returns this month when day is still upcoming", () => {
+    const from = new Date("2026-05-10T12:00:00Z");
+    const next = monthlyStartDate(15, from);
+    expect(next.getUTCDate()).toBe(15);
+    expect(next.getUTCMonth()).toBe(4);
+  });
+
+  it("returns next month when day already passed", () => {
+    const from = new Date("2026-05-23T12:00:00Z");
+    const next = monthlyStartDate(15, from);
+    expect(next.getUTCDate()).toBe(15);
+    expect(next.getUTCMonth()).toBe(5);
+  });
+});
+
+describe("nextFireDate monthly", () => {
+  it("uses dayOfMonth for the first fire even when startDate is today", () => {
+    const r = rule({
+      dayOfMonth: 15,
+      startDate: "2026-05-23T00:00:00.000Z",
+    });
+    const next = nextFireDate(r);
+    expect(next.getUTCDate()).toBe(15);
+    expect(next.getUTCMonth()).toBe(4);
+  });
+});
+
+describe("describeRecurringSchedule", () => {
+  it("describes monthly rules by day of month", () => {
+    expect(
+      describeRecurringSchedule(
+        rule({ cadence: "monthly", dayOfMonth: 1, startDate: "2026-01-01T00:00:00.000Z" })
+      )
+    ).toBe("Day 1 of each month");
   });
 });

@@ -33,6 +33,14 @@ export function useRecurring({ onFire }: UseRecurringOptions) {
     }
   }, []);
 
+  const fireDueRules = useCallback((dueRules: RecurringRule[]) => {
+    const { newTransactions, updatedRules } = processDueRecurring(dueRules);
+    if (newTransactions.length === 0) return updatedRules;
+
+    onFireRef.current(newTransactions);
+    return updatedRules;
+  }, []);
+
   const addRule = useCallback(
     (rule: Omit<RecurringRule, "id" | "active"> & { active?: boolean }) => {
       const newRule: RecurringRule = {
@@ -41,18 +49,41 @@ export function useRecurring({ onFire }: UseRecurringOptions) {
         active: rule.active ?? true,
       };
       setRules((prev) => [newRule, ...prev]);
+
+      const updatedRules = fireDueRules([newRule]);
+      const firedRule = updatedRules[0];
+      if (firedRule.lastFiredDate !== newRule.lastFiredDate) {
+        setRules((prev) =>
+          prev.map((r) => (r.id === firedRule.id ? firedRule : r))
+        );
+      }
+
       return newRule;
     },
-    []
+    [fireDueRules]
   );
 
   const updateRule = useCallback(
     (id: string, updates: Partial<RecurringRule>) => {
-      setRules((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, ...updates } : r))
-      );
+      setRules((prev) => {
+        const existing = prev.find((r) => r.id === id);
+        if (!existing) return prev;
+
+        const merged: RecurringRule = {
+          ...existing,
+          ...updates,
+          template: updates.template
+            ? { ...existing.template, ...updates.template }
+            : existing.template,
+        };
+
+        const updatedRules = fireDueRules([merged]);
+        const firedRule = updatedRules[0];
+
+        return prev.map((r) => (r.id === id ? firedRule : r));
+      });
     },
-    []
+    [fireDueRules]
   );
 
   const deleteRule = useCallback((id: string) => {

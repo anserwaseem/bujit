@@ -10,7 +10,7 @@ import {
   Pencil,
   Check,
 } from "lucide-react";
-import { AppSettings, PaymentMode, Transaction } from "@/lib/types";
+import { AppSettings, Goal, PaymentMode, Transaction } from "@/lib/types";
 import type { useRecurring } from "@/hooks/useRecurring";
 import { RecurringSettings } from "@/components/RecurringSettings";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,7 @@ interface SettingsDialogProps {
   onClose: () => void;
   recurring?: ReturnType<typeof useRecurring>;
   paymentModesList?: PaymentMode[];
+  goals?: Goal[];
 }
 
 const CURRENCIES = [
@@ -60,6 +61,7 @@ export function SettingsDialog({
   onClose,
   recurring,
   paymentModesList,
+  goals = [],
 }: SettingsDialogProps) {
   const { toast } = useToast();
   const [localSettings, setLocalSettings] = useState(settings);
@@ -638,6 +640,7 @@ export function SettingsDialog({
             <RecurringSettings
               rules={recurring.rules}
               paymentModes={paymentModesList ?? paymentModes}
+              goals={goals}
               onAdd={recurring.addRule}
               onUpdate={recurring.updateRule}
               onDelete={recurring.deleteRule}
