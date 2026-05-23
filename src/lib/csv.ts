@@ -1,4 +1,5 @@
 import { Transaction, PaymentMode } from "./types";
+import { createId } from "./utils";
 
 const CSV_HEADERS = [
   "date",
@@ -169,7 +170,7 @@ export function parseCSVToTransactions(
         } else {
           // Create new payment mode
           const newMode: PaymentMode = {
-            id: crypto.randomUUID(),
+            id: createId(),
             name: trimmedPaymentMode,
             shorthand: trimmedPaymentMode.toUpperCase().slice(0, 4),
           };

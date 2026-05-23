@@ -7,6 +7,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** UUID that works on HTTP (e.g. LAN dev URLs) where crypto.randomUUID may throw. */
+export function createId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    try {
+      return crypto.randomUUID();
+    } catch {
+      // non-secure context (e.g. http://192.168.x.x)
+    }
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
 // Haptic feedback utility for mobile devices
 // Uses Tactus library which provides reliable haptic feedback on iOS Safari/Chrome
 // See: https://tactus.aadee.xyz/

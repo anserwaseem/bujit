@@ -14,6 +14,7 @@ import {
   scheduleHint,
 } from "@/lib/recurring";
 import { GoalChip } from "@/components/GoalChip";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 interface RecurringSettingsProps {
@@ -93,7 +94,7 @@ function buildRulePayload(
   return {
     template: {
       reason: state.reason.trim(),
-      amount: parseFloat(state.amount),
+      amount: parseAmount(state.amount),
       paymentMode: state.paymentMode,
       type: state.type,
       necessity: null,
@@ -105,15 +106,31 @@ function buildRulePayload(
   };
 }
 
+function parseAmount(value: string): number {
+  const normalized = value.replace(/,/g, "").trim();
+  if (!normalized) return NaN;
+  return parseFloat(normalized);
+}
+
 function isFormValid(state: RecurringFormState): boolean {
   const parsedDay = parseInt(state.dayOfMonth, 10);
   const monthlyDayValid =
     state.cadence !== "monthly" || (parsedDay >= 1 && parsedDay <= 31);
   return (
     Boolean(state.reason.trim()) &&
-    parseFloat(state.amount) > 0 &&
+    parseAmount(state.amount) > 0 &&
     monthlyDayValid
   );
+}
+
+function formValidationMessage(state: RecurringFormState): string | null {
+  if (!state.reason.trim()) return "Enter a reason.";
+  if (!(parseAmount(state.amount) > 0)) return "Enter a valid amount.";
+  const parsedDay = parseInt(state.dayOfMonth, 10);
+  if (state.cadence === "monthly" && (parsedDay < 1 || parsedDay > 31)) {
+    return "Day of month must be between 1 and 31.";
+  }
+  return null;
 }
 
 interface RecurringRuleFormProps {
@@ -121,6 +138,7 @@ interface RecurringRuleFormProps {
   paymentModes: PaymentMode[];
   goals: Goal[];
   mode: "add" | "edit";
+  validationMessage: string | null;
   onChange: (updates: Partial<RecurringFormState>) => void;
   onCadenceChange: (cadence: RecurringCadence) => void;
   onSubmit: () => void;
@@ -132,6 +150,7 @@ function RecurringRuleForm({
   paymentModes,
   goals,
   mode,
+  validationMessage,
   onChange,
   onCadenceChange,
   onSubmit,
@@ -145,7 +164,13 @@ function RecurringRuleForm({
       : new Date(form.startDate).toISOString();
 
   return (
-    <div className="border border-border rounded-xl p-3 space-y-3 bg-muted/30">
+    <form
+      className="border border-border rounded-xl p-3 space-y-3 bg-muted/30 pb-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
+    >
       <input
         value={form.reason}
         onChange={(e) => onChange({ reason: e.target.value })}
@@ -154,7 +179,10 @@ function RecurringRuleForm({
       />
       <div className="grid grid-cols-2 gap-2">
         <input
-          type="number"
+          type="text"
+          inputMode="decimal"
+          enterKeyHint="done"
+          autoComplete="off"
           value={form.amount}
           onChange={(e) => onChange({ amount: e.target.value })}
           placeholder="Amount"
@@ -176,6 +204,7 @@ function RecurringRuleForm({
         {(["expense", "income"] as const).map((t) => (
           <button
             key={t}
+            type="button"
             onClick={() => onChange({ type: t })}
             className={cn(
               "flex-1 py-1.5 rounded-md text-xs font-medium capitalize",
@@ -226,11 +255,14 @@ function RecurringRuleForm({
               Day of month
             </span>
             <input
-              type="number"
-              min={1}
-              max={31}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              enterKeyHint="done"
               value={form.dayOfMonth}
-              onChange={(e) => onChange({ dayOfMonth: e.target.value })}
+              onChange={(e) =>
+                onChange({ dayOfMonth: e.target.value.replace(/\D/g, "") })
+              }
               className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </label>
@@ -263,16 +295,20 @@ function RecurringRuleForm({
         </p>
       </div>
 
+      {validationMessage && (
+        <p className="text-xs text-destructive">{validationMessage}</p>
+      )}
+
       <div className="flex gap-2">
         <button
+          type="button"
           onClick={onCancel}
           className="flex-1 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium"
         >
           Cancel
         </button>
         <button
-          disabled={!canSave}
-          onClick={onSubmit}
+          type="submit"
           className={cn(
             "flex-1 py-2 rounded-lg text-sm font-medium",
             canSave
@@ -283,7 +319,7 @@ function RecurringRuleForm({
           {mode === "add" ? "Create" : "Save"}
         </button>
       </div>
-    </div>
+    </form>
   );
 }
 
@@ -296,8 +332,12 @@ export function RecurringSettings({
   onDelete,
   onToggle,
 }: RecurringSettingsProps) {
+  const { toast } = useToast();
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [validationMessage, setValidationMessage] = useState<string | null>(
+    null
+  );
   const [form, setForm] = useState<RecurringFormState>(() =>
     defaultFormState(paymentModes)
   );
@@ -309,6 +349,7 @@ export function RecurringSettings({
   const goalNameById = new Map(activeGoals.map((g) => [g.id, g.name]));
 
   const patchForm = (updates: Partial<RecurringFormState>) => {
+    setValidationMessage(null);
     setForm((prev) => ({ ...prev, ...updates }));
   };
 
@@ -333,6 +374,7 @@ export function RecurringSettings({
   const closeForm = () => {
     setAdding(false);
     setEditingId(null);
+    setValidationMessage(null);
     setForm(defaultFormState(paymentModes));
   };
 
@@ -351,22 +393,42 @@ export function RecurringSettings({
   };
 
   const handleSubmit = () => {
-    if (!isFormValid(form)) return;
-    const existing = editingId
-      ? rules.find((rule) => rule.id === editingId)
-      : undefined;
-    const payload = buildRulePayload(form, existing);
-
-    if (editingId) {
-      onUpdate(editingId, payload);
-    } else {
-      onAdd(payload);
+    const message = formValidationMessage(form);
+    if (message) {
+      setValidationMessage(message);
+      toast({
+        title: "Can't save rule",
+        description: message,
+        variant: "destructive",
+      });
+      return;
     }
-    closeForm();
+
+    try {
+      const existing = editingId
+        ? rules.find((rule) => rule.id === editingId)
+        : undefined;
+      const payload = buildRulePayload(form, existing);
+
+      if (editingId) {
+        onUpdate(editingId, payload);
+      } else {
+        onAdd(payload);
+      }
+      haptic("success");
+      closeForm();
+    } catch (error) {
+      console.error("Error saving recurring rule:", error);
+      toast({
+        title: "Could not save rule",
+        description: "Something went wrong. Try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <div className="space-y-4">
+    <div className={cn("space-y-4", showForm && "pb-24")}>
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground flex-1">
           Schedule transactions to auto-create on a cadence. Due rules fire when
@@ -388,6 +450,7 @@ export function RecurringSettings({
           paymentModes={paymentModes}
           goals={activeGoals}
           mode={formMode}
+          validationMessage={validationMessage}
           onChange={patchForm}
           onCadenceChange={handleCadenceChange}
           onSubmit={handleSubmit}

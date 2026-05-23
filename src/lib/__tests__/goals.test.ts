@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { computeGoalProgress } from "../goals";
+import { createId } from "../utils";
 import type { Goal, Transaction } from "../types";
 
 function tx(over: Partial<Transaction>): Transaction {
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     date: new Date().toISOString(),
     reason: "x",
     amount: 100,

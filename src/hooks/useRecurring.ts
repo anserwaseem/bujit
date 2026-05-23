@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getRecurringRules, saveRecurringRules } from "@/lib/storage";
 import { processDueRecurring } from "@/lib/recurring";
+import { createId } from "@/lib/utils";
 import type { RecurringRule, Transaction } from "@/lib/types";
 
 interface UseRecurringOptions {
@@ -45,22 +46,20 @@ export function useRecurring({ onFire }: UseRecurringOptions) {
     (rule: Omit<RecurringRule, "id" | "active"> & { active?: boolean }) => {
       const newRule: RecurringRule = {
         ...rule,
-        id: crypto.randomUUID(),
+        id: createId(),
         active: rule.active ?? true,
       };
-      setRules((prev) => [newRule, ...prev]);
 
-      const updatedRules = fireDueRules([newRule]);
-      const firedRule = updatedRules[0];
-      if (firedRule.lastFiredDate !== newRule.lastFiredDate) {
-        setRules((prev) =>
-          prev.map((r) => (r.id === firedRule.id ? firedRule : r))
-        );
+      const { newTransactions, updatedRules } = processDueRecurring([newRule]);
+      if (newTransactions.length > 0) {
+        onFireRef.current(newTransactions);
       }
+      const savedRule = updatedRules[0] ?? newRule;
 
-      return newRule;
+      setRules((prev) => [savedRule, ...prev]);
+      return savedRule;
     },
-    [fireDueRules]
+    []
   );
 
   const updateRule = useCallback(

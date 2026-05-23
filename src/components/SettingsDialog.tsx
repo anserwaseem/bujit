@@ -13,7 +13,7 @@ import {
 import { AppSettings, Goal, PaymentMode, Transaction } from "@/lib/types";
 import type { useRecurring } from "@/hooks/useRecurring";
 import { RecurringSettings } from "@/components/RecurringSettings";
-import { cn } from "@/lib/utils";
+import { cn, createId } from "@/lib/utils";
 import { safeUpdate } from "@/lib/pwa";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -80,7 +80,7 @@ export function SettingsDialog({
   const handleAddMode = () => {
     if (!newModeName.trim() || !newModeShort.trim()) return;
     const newMode: PaymentMode = {
-      id: crypto.randomUUID(),
+      id: createId(),
       name: newModeName.trim(),
       shorthand: newModeShort.trim().toUpperCase(),
     };

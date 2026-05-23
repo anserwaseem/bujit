@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getGoals, saveGoals } from "@/lib/storage";
+import { createId } from "@/lib/utils";
 import type { Goal } from "@/lib/types";
 
 export function useGoals() {
@@ -12,7 +13,7 @@ export function useGoals() {
   const addGoal = useCallback((goal: Omit<Goal, "id" | "createdAt">) => {
     const newGoal: Goal = {
       ...goal,
-      id: crypto.randomUUID(),
+      id: createId(),
       createdAt: new Date().toISOString(),
     };
     setGoals((prev) => [newGoal, ...prev]);
