@@ -19,6 +19,7 @@ const MAX_EXPRESSION_LENGTH = 50;
 function expandPercentShorthand(expr: string): string {
   // Match: <base><op:+|-><pct>% where base/pct can be decimals or parenthesised
   // We repeatedly apply the leftmost match so chained "+5%-2%" works.
+  // eslint-disable-next-line no-useless-escape
   const PCT_RE = /(\d+(?:\.\d+)?|\([^()]*\))\s*([+\-])\s*(\d+(?:\.\d+)?)%/;
   let out = expr;
   // Cap iterations to avoid pathological loops.
