@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { parseInput } from "@/lib/parser";
-import { PaymentMode, Transaction, NecessityType } from "@/lib/types";
+import { PaymentMode, Transaction, NecessityType, Goal } from "@/lib/types";
+import { GoalChip } from "@/components/GoalChip";
 import { cn, haptic } from "@/lib/utils";
 import { hasOperators, formatEvaluatedAmount } from "@/lib/mathEval";
 import { detectAnomaly } from "@/lib/anomaly";
@@ -34,6 +35,7 @@ interface TransactionInputProps {
   onAdd: (transaction: Omit<Transaction, "id">) => void;
   onRepeatLast?: () => void;
   lastTransaction?: Transaction | null;
+  goals?: Goal[];
 }
 
 export function TransactionInput({
@@ -44,12 +46,16 @@ export function TransactionInput({
   onAdd,
   onRepeatLast,
   lastTransaction,
+  goals = [],
 }: TransactionInputProps) {
   const [input, setInput] = useState("");
   const [isIncome, setIsIncome] = useState(false);
   const [selectedNecessity, setSelectedNecessity] =
     useState<NecessityType>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedGoalId, setSelectedGoalId] = useState<string | undefined>(
+    undefined
+  );
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [showAutoComplete, setShowAutoComplete] = useState(false);
   const [isLongPressing, setIsLongPressing] = useState(false);
@@ -158,19 +164,29 @@ export function TransactionInput({
       recordNecessity(parsed.reason, selectedNecessity);
     }
 
+    // Smart inference: owe→expense, owed→income (only when type wasn't manually flipped)
+    const goal = selectedGoalId
+      ? goals.find((g) => g.id === selectedGoalId)
+      : undefined;
+    let inferredIsIncome = isIncome;
+    if (goal?.kind === "owed") inferredIsIncome = true;
+    if (goal?.kind === "owe") inferredIsIncome = false;
+
     onAdd({
       date: selectedDate.toISOString(),
       reason: parsed.reason,
       amount: parsed.amount,
       paymentMode: parsed.paymentMode,
-      type: isIncome ? "income" : "expense",
-      necessity: isIncome ? null : selectedNecessity,
+      type: inferredIsIncome ? "income" : "expense",
+      necessity: inferredIsIncome ? null : selectedNecessity,
+      goalId: selectedGoalId,
     });
 
     setInput("");
     setSelectedNecessity(null);
     setSelectedDate(new Date());
     setShowAutoComplete(false);
+    setSelectedGoalId(undefined);
   }, [
     parsed,
     isIncome,
@@ -178,6 +194,8 @@ export function TransactionInput({
     selectedDate,
     onAdd,
     recordNecessity,
+    selectedGoalId,
+    goals,
   ]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
