@@ -263,6 +263,19 @@ export function EditTransactionDialog({
               </div>
             </div>
           )}
+
+          {goals.filter((g) => !g.archived).length > 0 && (
+            <div>
+              <label className="text-sm text-muted-foreground mb-1.5 block">
+                Goal
+              </label>
+              <GoalChip
+                goals={goals.filter((g) => !g.archived)}
+                selectedGoalId={selectedGoalId}
+                onSelect={setSelectedGoalId}
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 p-4 border-t border-border">
