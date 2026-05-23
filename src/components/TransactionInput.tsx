@@ -518,6 +518,17 @@ export function TransactionInput({
             </button>
           )}
 
+          {/* Goal tag chip */}
+          {goals.filter((g) => !g.archived).length > 0 && (
+            <div className="mt-3 flex justify-end">
+              <GoalChip
+                goals={goals.filter((g) => !g.archived)}
+                selectedGoalId={selectedGoalId}
+                onSelect={setSelectedGoalId}
+              />
+            </div>
+          )}
+
           {/* Necessity Pills - only for expenses */}
           {!isIncome && (
             <div className="flex gap-2 mt-4 pt-4 border-t border-border">

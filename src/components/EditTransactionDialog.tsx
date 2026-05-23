@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { X, CalendarIcon, Minus, Plus, Check, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
-import { Transaction, NecessityType, PaymentMode } from "@/lib/types";
+import { Transaction, NecessityType, PaymentMode, Goal } from "@/lib/types";
+import { GoalChip } from "@/components/GoalChip";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -21,6 +22,7 @@ interface EditTransactionDialogProps {
   currencySymbol: string;
   onSave: (id: string, updates: Partial<Transaction>) => void;
   onClose: () => void;
+  goals?: Goal[];
 }
 
 export function EditTransactionDialog({
@@ -29,6 +31,7 @@ export function EditTransactionDialog({
   currencySymbol,
   onSave,
   onClose,
+  goals = [],
 }: EditTransactionDialogProps) {
   const [reason, setReason] = useState(transaction.reason);
   const [amount, setAmount] = useState(transaction.amount.toString());
@@ -39,6 +42,9 @@ export function EditTransactionDialog({
   const [type, setType] = useState(transaction.type);
   const [selectedDate, setSelectedDate] = useState<Date>(
     new Date(transaction.date)
+  );
+  const [selectedGoalId, setSelectedGoalId] = useState<string | undefined>(
+    transaction.goalId
   );
   const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -60,6 +66,7 @@ export function EditTransactionDialog({
       necessity: type === "income" ? null : necessity,
       type,
       date: selectedDate.toISOString(),
+      goalId: selectedGoalId,
     });
     onClose();
   };
