@@ -963,6 +963,30 @@ export function buildDashboardCards(
         </div>
       ),
     },
+    "spending-heatmap": {
+      id: "spending-heatmap",
+      type: "chart",
+      fullWidth: true,
+      render: () => (
+        <SpendingHeatmap
+          transactions={allTransactions}
+          onOpenFilteredTransactions={onOpenFilteredTransactions}
+        />
+      ),
+    },
+    goals: {
+      id: "goals",
+      type: "insight",
+      fullWidth: true,
+      render: () => (
+        <GoalsCard
+          goalsProgress={goalsProgress}
+          currencySymbol={currencySymbol}
+          formatAmount={formatAmountWithPrivacy}
+          onOpenGoals={onOpenGoals}
+        />
+      ),
+    },
   };
 
   return cards;
