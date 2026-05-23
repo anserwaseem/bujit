@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { format, startOfDay, endOfDay, subDays, subMonths, startOfWeek } from "date-fns";
+import { format, startOfDay, endOfDay, subDays, startOfWeek } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import { cn, haptic } from "@/lib/utils";
 import type { Transaction } from "@/lib/types";
