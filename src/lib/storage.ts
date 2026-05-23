@@ -4,6 +4,8 @@ import type {
   AppSettings,
   DashboardCard,
   DashboardLayout,
+  Goal,
+  RecurringRule,
 } from "./types";
 
 const TRANSACTIONS_KEY = "bujit_transactions";
@@ -194,6 +196,9 @@ const DEFAULT_DASHBOARD_CARDS: DashboardCard[] = [
   { id: "daily-chart", type: "chart", order: 16, visible: true },
   { id: "monthly-trend", type: "chart", order: 17, visible: true },
   { id: "last-month", type: "stat", order: 18, visible: true },
+  // New
+  { id: "goals", type: "insight", order: 19, visible: true },
+  { id: "spending-heatmap", type: "chart", order: 20, visible: true },
 ];
 
 function notifyDashboardLayoutChanged() {
@@ -260,5 +265,70 @@ export function resetDashboardLayout(): void {
     notifyDashboardLayoutChanged();
   } catch (error) {
     console.error("Error resetting dashboard layout:", error);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Goals storage
+// ---------------------------------------------------------------------------
+const GOALS_KEY = "bujit_goals";
+
+export function getGoals(): Goal[] {
+  try {
+    const data = localStorage.getItem(GOALS_KEY);
+    if (!data) return [];
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (g): g is Goal =>
+        g &&
+        typeof g === "object" &&
+        typeof g.id === "string" &&
+        typeof g.name === "string" &&
+        (g.kind === "savings" || g.kind === "owe" || g.kind === "owed")
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function saveGoals(goals: Goal[]): void {
+  try {
+    localStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+  } catch (error) {
+    console.error("Error saving goals:", error);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Recurring rules storage
+// ---------------------------------------------------------------------------
+const RECURRING_KEY = "bujit_recurring";
+
+export function getRecurringRules(): RecurringRule[] {
+  try {
+    const data = localStorage.getItem(RECURRING_KEY);
+    if (!data) return [];
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (r): r is RecurringRule =>
+        r &&
+        typeof r === "object" &&
+        typeof r.id === "string" &&
+        typeof r.cadence === "string" &&
+        typeof r.startDate === "string" &&
+        r.template
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function saveRecurringRules(rules: RecurringRule[]): void {
+  try {
+    localStorage.setItem(RECURRING_KEY, JSON.stringify(rules));
+  } catch (error) {
+    console.error("Error saving recurring rules:", error);
   }
 }

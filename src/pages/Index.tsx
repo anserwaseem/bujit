@@ -6,6 +6,9 @@ import {
   startTransition,
 } from "react";
 import { useBujit } from "@/hooks/useBujit";
+import { useGoals } from "@/hooks/useGoals";
+import { useRecurring } from "@/hooks/useRecurring";
+import { computeAllGoalsProgress } from "@/lib/goals";
 import { FilterProvider, useFilters } from "@/hooks/useFilters.tsx";
 import { Header } from "@/components/Header";
 import { StatsBar } from "@/components/StatsBar";
@@ -15,6 +18,7 @@ import { Dashboard } from "@/components/dashboard/Dashboard";
 import { FilterButton, FilterContent } from "@/components/FilterPanel";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { EditTransactionDialog } from "@/components/EditTransactionDialog";
+import { GoalsScreen } from "@/components/GoalsScreen";
 import {
   FilteredTransactionsDialog,
   type AdditionalFilterCriteria,
@@ -40,6 +44,13 @@ const IndexContent = () => {
     updateSettings,
   } = useBujit();
 
+  const { goals, addGoal, updateGoal, deleteGoal, archiveGoal } = useGoals();
+  const recurring = useRecurring({
+    onFire: (txs) => {
+      txs.forEach((t) => addTransaction(t));
+    },
+  });
+
   const { getFilteredTransactions, filters } = useFilters();
   const { timePeriod } = filters;
 
@@ -64,6 +75,7 @@ const IndexContent = () => {
     (typeof transactions)[0] | null
   >(null);
   const [filteredDialogOpen, setFilteredDialogOpen] = useState(false);
+  const [showGoals, setShowGoals] = useState(false);
   const [additionalFilter, setAdditionalFilter] =
     useState<AdditionalFilterCriteria | null>(null);
   const [dialogTitle, setDialogTitle] = useState<string>("");
@@ -72,6 +84,11 @@ const IndexContent = () => {
   const filteredTransactions = useMemo(() => {
     return getFilteredTransactions(transactions);
   }, [transactions, getFilteredTransactions]);
+
+  const goalsProgress = useMemo(
+    () => computeAllGoalsProgress(goals, transactions),
+    [goals, transactions]
+  );
 
   // Calculate stats from filtered transactions
   const filteredStats = useMemo(() => {
@@ -217,6 +234,7 @@ const IndexContent = () => {
               onAdd={addTransaction}
               onRepeatLast={handleRepeatLast}
               lastTransaction={lastTransaction}
+              goals={goals}
             />
           </section>
 
@@ -253,6 +271,8 @@ const IndexContent = () => {
             timePeriod={timePeriod}
             paymentModes={paymentModes}
             onOpenFilteredTransactions={handleOpenFilteredTransactions}
+            goalsProgress={goalsProgress}
+            onOpenGoals={() => setShowGoals(true)}
           />
         </Activity>
       </div>
@@ -273,6 +293,9 @@ const IndexContent = () => {
             newTransactions.forEach((t) => addTransaction(t));
           }}
           onClose={() => setShowSettings(false)}
+          recurring={recurring}
+          paymentModesList={paymentModes}
+          goals={goals}
         />
       )}
 
@@ -283,6 +306,21 @@ const IndexContent = () => {
           currencySymbol={settings.currencySymbol}
           onSave={updateTransaction}
           onClose={() => setEditingTransaction(null)}
+          goals={goals}
+        />
+      )}
+
+      {showGoals && (
+        <GoalsScreen
+          goals={goals}
+          transactions={transactions}
+          currencySymbol={settings.currencySymbol}
+          settings={settings}
+          onAddGoal={addGoal}
+          onUpdateGoal={updateGoal}
+          onDeleteGoal={deleteGoal}
+          onArchiveGoal={archiveGoal}
+          onClose={() => setShowGoals(false)}
         />
       )}
 

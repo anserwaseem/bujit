@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import type { AppSettings, PaymentMode, StreakData, Transaction } from "@/lib/types";
+import type { GoalProgress } from "@/lib/goals";
 import type { TimePeriod } from "@/hooks/useFilters";
 import { saveDashboardLayout } from "@/lib/storage";
 import { getPeriodText } from "@/lib/utils";
@@ -26,6 +27,8 @@ interface DashboardProps {
     additionalFilter: AdditionalFilterCriteria,
     title: string
   ) => void;
+  goalsProgress: GoalProgress[];
+  onOpenGoals: () => void;
 }
 
 export function Dashboard({
@@ -37,6 +40,8 @@ export function Dashboard({
   timePeriod,
   paymentModes,
   onOpenFilteredTransactions,
+  goalsProgress,
+  onOpenGoals,
 }: DashboardProps) {
   /** Parent already filtered; keep API stable. */
   const filteredTransactions = transactions;
@@ -58,6 +63,9 @@ export function Dashboard({
       maskReason: (reason) => maskReason(reason, settings),
       onOpenFilteredTransactions,
       paymentModes,
+      allTransactions,
+      goalsProgress,
+      onOpenGoals,
     });
   }, [
     analytics,
@@ -68,6 +76,9 @@ export function Dashboard({
     formatAmountWithPrivacy,
     onOpenFilteredTransactions,
     paymentModes,
+    allTransactions,
+    goalsProgress,
+    onOpenGoals,
   ]);
 
   const renderCard = (id: DashboardCardId) => cards[id]?.render() ?? null;

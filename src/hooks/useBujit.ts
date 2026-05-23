@@ -20,6 +20,7 @@ import {
   type GoogleSheetsConfig,
 } from "@/lib/storage";
 import { syncTransactionsToSheet } from "@/lib/googleSheets";
+import { createId } from "@/lib/utils";
 import { useStreakTracking } from "@/hooks/useStreakTracking";
 
 const DEFAULT_MODES: PaymentMode[] = [
@@ -173,7 +174,7 @@ export function useBujit() {
     (transaction: Omit<Transaction, "id">) => {
       const newTransaction: Transaction = {
         ...transaction,
-        id: crypto.randomUUID(),
+        id: createId(),
       };
       const updated = addTransaction(newTransaction);
       setTransactions(updated);

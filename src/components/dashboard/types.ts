@@ -22,7 +22,9 @@ export type DashboardCardId =
   | "needs-wants"
   | "payment-mode"
   | "monthly-trend"
-  | "last-month";
+  | "last-month"
+  | "goals"
+  | "spending-heatmap";
 
 export interface DashboardCardSpec {
   id: DashboardCardId;

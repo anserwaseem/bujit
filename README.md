@@ -138,7 +138,7 @@ You can add custom payment modes in Settings.
 
 ## 🔒 Privacy
 
-All data is stored locally in your browser's localStorage. Nothing is sent to any server (except AI chat if you configure a Gemini API key).
+All data is stored locally in your browser's localStorage. Nothing is sent to any server.
 
 ## 📊 Need/Want Categorization
 
@@ -147,14 +147,6 @@ Bujit helps you understand your spending habits with simple categorization:
 - **Need** 🔵 - Essential expenses (groceries, rent, utilities)
 - **Want** 🟡 - Non-essential expenses (entertainment, dining out)
 - **Uncategorized** - Tap the dot to categorize anytime
-
-## 🤖 AI Insights (Optional)
-
-Connect your Gemini API key in Settings to:
-
-- Ask questions about your spending
-- Get personalized budgeting advice
-- Analyze spending patterns
 
 ## 📄 License
 

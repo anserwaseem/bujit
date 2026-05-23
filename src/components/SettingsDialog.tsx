@@ -10,8 +10,10 @@ import {
   Pencil,
   Check,
 } from "lucide-react";
-import { AppSettings, PaymentMode, Transaction } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { AppSettings, Goal, PaymentMode, Transaction } from "@/lib/types";
+import type { useRecurring } from "@/hooks/useRecurring";
+import { RecurringSettings } from "@/components/RecurringSettings";
+import { cn, createId } from "@/lib/utils";
 import { safeUpdate } from "@/lib/pwa";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -34,6 +36,9 @@ interface SettingsDialogProps {
     newModes?: PaymentMode[]
   ) => void;
   onClose: () => void;
+  recurring?: ReturnType<typeof useRecurring>;
+  paymentModesList?: PaymentMode[];
+  goals?: Goal[];
 }
 
 const CURRENCIES = [
@@ -54,6 +59,9 @@ export function SettingsDialog({
   onSavePaymentModes,
   onImportTransactions,
   onClose,
+  recurring,
+  paymentModesList,
+  goals = [],
 }: SettingsDialogProps) {
   const { toast } = useToast();
   const [localSettings, setLocalSettings] = useState(settings);
@@ -64,7 +72,7 @@ export function SettingsDialog({
   const [editModeName, setEditModeName] = useState("");
   const [editModeShort, setEditModeShort] = useState("");
   const [activeTab, setActiveTab] = useState<
-    "general" | "payments" | "data" | "sync"
+    "general" | "payments" | "data" | "sync" | "recurring"
   >("general");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,7 +80,7 @@ export function SettingsDialog({
   const handleAddMode = () => {
     if (!newModeName.trim() || !newModeShort.trim()) return;
     const newMode: PaymentMode = {
-      id: crypto.randomUUID(),
+      id: createId(),
       name: newModeName.trim(),
       shorthand: newModeShort.trim().toUpperCase(),
     };
@@ -253,13 +261,15 @@ export function SettingsDialog({
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-2 border-b border-border shrink-0">
-          {(["general", "payments", "data", "sync"] as const).map((tab) => (
+        <div className="flex gap-1 p-2 border-b border-border shrink-0 overflow-x-auto">
+          {(
+            ["general", "payments", "recurring", "data", "sync"] as const
+          ).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "flex-1 py-2 px-3 rounded-lg text-sm font-medium capitalize transition-colors",
+                "flex-shrink-0 py-2 px-3 rounded-lg text-sm font-medium capitalize transition-colors",
                 activeTab === tab
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -624,6 +634,18 @@ export function SettingsDialog({
               </p>
               <GoogleSheetsSync transactions={transactions} />
             </div>
+          )}
+
+          {activeTab === "recurring" && recurring && (
+            <RecurringSettings
+              rules={recurring.rules}
+              paymentModes={paymentModesList ?? paymentModes}
+              goals={goals}
+              onAdd={recurring.addRule}
+              onUpdate={recurring.updateRule}
+              onDelete={recurring.deleteRule}
+              onToggle={recurring.toggleRule}
+            />
           )}
         </div>
 
