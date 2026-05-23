@@ -981,7 +981,6 @@ export function buildDashboardCards(
       render: () => (
         <GoalsCard
           goalsProgress={goalsProgress}
-          currencySymbol={currencySymbol}
           formatAmount={formatAmountWithPrivacy}
           onOpenGoals={onOpenGoals}
         />

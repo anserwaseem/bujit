@@ -4,7 +4,6 @@ import type { GoalProgress } from "@/lib/goals";
 
 interface GoalsCardProps {
   goalsProgress: GoalProgress[];
-  currencySymbol: string;
   formatAmount: (n: number) => string;
   onOpenGoals: () => void;
 }
@@ -51,7 +50,6 @@ function ProgressRing({ percent, kind }: { percent: number; kind: string }) {
 
 export function GoalsCard({
   goalsProgress,
-  currencySymbol,
   formatAmount,
   onOpenGoals,
 }: GoalsCardProps) {
@@ -116,7 +114,6 @@ export function GoalsCard({
               </div>
               <div className="text-right flex-shrink-0">
                 <p className="text-xs font-mono font-semibold">
-                  {currencySymbol}
                   {formatAmount(gp.current)}
                   {gp.target !== undefined && (
                     <span className="text-muted-foreground font-normal">
