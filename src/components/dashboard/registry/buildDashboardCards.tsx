@@ -37,6 +37,10 @@ import type {
 } from "../types";
 import { StatCard } from "../cards/StatCard";
 import { InsightCard } from "../cards/InsightCard";
+import { SpendingHeatmap } from "../cards/SpendingHeatmap";
+import { GoalsCard } from "../cards/GoalsCard";
+import type { Transaction } from "@/lib/types";
+import type { GoalProgress } from "@/lib/goals";
 import { MODE_COLORS, CATEGORY_COLORS } from "../constants";
 import type { AdditionalFilterCriteria } from "@/components/FilteredTransactionsDialog";
 import { getWeekStart, getWeekEnd } from "../hooks/analytics/helpers";
@@ -55,6 +59,9 @@ interface BuildCtx {
     title: string
   ) => void;
   paymentModes: PaymentMode[];
+  allTransactions: Transaction[];
+  goalsProgress: GoalProgress[];
+  onOpenGoals: () => void;
 }
 
 export function buildDashboardCards(
@@ -70,6 +77,9 @@ export function buildDashboardCards(
     maskReason,
     onOpenFilteredTransactions,
     paymentModes,
+    allTransactions,
+    goalsProgress,
+    onOpenGoals,
   } = ctx;
 
   // Create a map from payment mode name to shorthand for quick lookup
@@ -951,6 +961,29 @@ export function buildDashboardCards(
             </div>
           </div>
         </div>
+      ),
+    },
+    "spending-heatmap": {
+      id: "spending-heatmap",
+      type: "chart",
+      fullWidth: true,
+      render: () => (
+        <SpendingHeatmap
+          transactions={allTransactions}
+          onOpenFilteredTransactions={onOpenFilteredTransactions}
+        />
+      ),
+    },
+    goals: {
+      id: "goals",
+      type: "insight",
+      fullWidth: true,
+      render: () => (
+        <GoalsCard
+          goalsProgress={goalsProgress}
+          formatAmount={formatAmountWithPrivacy}
+          onOpenGoals={onOpenGoals}
+        />
       ),
     },
   };

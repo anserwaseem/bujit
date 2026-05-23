@@ -9,6 +9,8 @@ export interface Transaction {
   paymentMode: string;
   type: TransactionType;
   necessity: NecessityType;
+  /** Optional link to a Goal (savings/owe/owed). Backward compatible. */
+  goalId?: string;
 }
 
 export interface PaymentMode {
@@ -50,4 +52,42 @@ export interface DashboardCard {
 export interface DashboardLayout {
   cards: DashboardCard[];
   lastUpdated: string;
+}
+
+// ---------------------------------------------------------------------------
+// Goals — unified savings / owe / owed
+// ---------------------------------------------------------------------------
+// Path A philosophy: we do NOT introduce a "transfer" TransactionType. Every
+// goal is just a long-running pot whose progress is derived from the user's
+// normal income/expense entries that opt-in by carrying `goalId`. This keeps
+// the data model and existing analytics untouched, while still letting users
+// track debts, loans, sinking funds, and savings targets.
+
+export type GoalKind = "savings" | "owe" | "owed";
+
+export interface Goal {
+  id: string;
+  name: string;
+  kind: GoalKind;
+  target?: number;
+  counterparty?: string;
+  dueDate?: string;
+  createdAt: string;
+  archived?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Recurring transactions
+// ---------------------------------------------------------------------------
+export type RecurringCadence = "daily" | "weekly" | "monthly" | "yearly";
+
+export interface RecurringRule {
+  id: string;
+  template: Omit<Transaction, "id" | "date">;
+  cadence: RecurringCadence;
+  /** For monthly: day-of-month (1..31, clamped). */
+  dayOfMonth?: number;
+  startDate: string;
+  lastFiredDate?: string;
+  active: boolean;
 }
