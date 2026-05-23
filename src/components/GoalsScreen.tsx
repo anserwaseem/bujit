@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { X, Plus, Archive, Trash2, Pencil, Target, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import type { Goal, GoalKind, Transaction, AppSettings } from "@/lib/types";
-import { computeAllGoalsProgress, computeGoalProgress } from "@/lib/goals";
+import { computeAllGoalsProgress } from "@/lib/goals";
 import { cn, haptic } from "@/lib/utils";
 import { formatMaskedAmount } from "@/lib/privacy";
 
