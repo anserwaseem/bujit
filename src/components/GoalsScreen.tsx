@@ -24,6 +24,12 @@ const KIND_OPTIONS: { value: GoalKind; label: string; hint: string }[] = [
   { value: "owed", label: "Owed", hint: "Money owed to you" },
 ];
 
+const GOAL_NAME_PLACEHOLDERS: Record<GoalKind, string> = {
+  savings: "Emergency fund",
+  owe: "Credit card balance",
+  owed: "Personal loan",
+};
+
 const KIND_COLOR: Record<GoalKind, string> = {
   savings: "text-income",
   owe: "text-expense",
@@ -343,13 +349,7 @@ function GoalForm({ initial, onCancel, onSubmit }: GoalFormProps) {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={
-                kind === "savings"
-                  ? "Zakat 2026"
-                  : kind === "owe"
-                    ? "Ali — borrowed"
-                    : "Sara — lent"
-              }
+              placeholder={GOAL_NAME_PLACEHOLDERS[kind]}
               className="w-full bg-input border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>

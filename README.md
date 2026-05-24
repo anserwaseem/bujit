@@ -36,9 +36,11 @@ That's it. Type what you spent, how you paid, and the amount. Done in 3 seconds.
 
 - **Natural language input**: Type `Grocery CC 9500` instead of filling forms
 - **Smart auto-complete**: Suggestions based on your history as you type
+- **Math in amounts**: Type `250+180` and Bujit evaluates it for you
 - **Amount presets**: Quick-tap your most common amounts
 - **Voice input**: Speak your expenses hands-free
 - **Swipe-to-backdate**: Swipe the date pill to quickly log yesterday's expenses
+- **Goal tagging**: Link a transaction to a savings, debt, or loan goal
 
 ### One-Tap Everything
 
@@ -52,23 +54,44 @@ That's it. Type what you spent, how you paid, and the amount. Done in 3 seconds.
 - **Auto-learn necessity**: Bujit remembers how you categorize items
 - **Pattern recognition**: Suggests categories based on your 70%+ usage patterns
 - **Frequency-based presets**: Amount buttons adapt to your spending habits
+- **Anomaly hints**: Flags unusually large entries compared to your history
 
-### Visual Delight
+### Goals
 
-- **"Today: X transactions" counter**: Always know your daily activity
-- **Animated empty state**: Helpful tips that rotate to guide new users
-- **Smooth animations**: Every interaction feels polished
-- **Beautiful dark/light modes**: Easy on the eyes, day or night
+Track long-running pots without a separate “transfer” type:
+
+- **Savings** — income adds, expenses subtract (net balance)
+- **Owe** — track paying back a debt
+- **Owed** — track money lent out
+
+Tag transactions with a goal as you log them, or attach a goal to a recurring rule so auto-created entries count too.
+
+### Recurring Transactions
+
+Schedule rent, subscriptions, salary, and other repeating entries in **Settings → Recurring**:
+
+- Daily, weekly, monthly, or yearly cadences
+- Clear schedule labels (day-of-month for monthly, start date for others)
+- Due rules fire when you open the app or save a rule
+- Optional goal linking on the template
 
 ### Powerful Dashboard
 
 - **Monthly overview**: Track expenses, income, needs vs wants
 - **Category breakdown**: See where your money goes
-- **AI-powered insights**: Chat with Gemini about your spending habits
+- **Goals card**: Progress toward savings and debt targets
+- **Streaks**: No-expense and spending streaks to build the habit
+- **Customizable layout**: Drag cards to match how you think about money
+
+### Backup & Export
+
+- **CSV import/export**: Move data in or out anytime (Settings → Data)
+- **Google Sheets sync** (optional): Back up transactions to a sheet you control (Settings → Sync)
+- **Auto-sync**: Push new transactions to Sheets when online, if enabled
 
 ## 🛠 Tech Stack
 
-- **React 18** - UI framework
+- **React 19** - UI framework
 - **TypeScript** - Type safety
 - **Vite** - Lightning-fast builds
 - **Tailwind CSS** - Utility-first styling
@@ -101,6 +124,37 @@ npm install
 npm run dev
 ```
 
+The dev server listens on port **8080**. Open `http://localhost:8080` on your machine.
+
+### Test on your phone (same Wi‑Fi)
+
+Vite exposes the app on your LAN so you can use it from iOS/Android:
+
+1. Run `npm run dev`
+2. Open the **Network** URL Vite prints (e.g. `http://192.168.x.x:8080`) on your phone
+
+Works over HTTP on local IPs — no HTTPS required for local dev.
+
+### Optional: Google Sheets sync
+
+Create a `.env` file in the project root:
+
+```bash
+VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
+```
+
+Then configure sync in the app under **Settings → Sync**. Without this, everything else still works locally.
+
+### Scripts
+
+| Command            | Description             |
+| ------------------ | ----------------------- |
+| `npm run dev`      | Start dev server        |
+| `npm run build`    | Lint + production build |
+| `npm run verify`   | Typecheck               |
+| `npm run lint`     | ESLint                  |
+| `npm run test:run` | Run tests once          |
+
 ## 📝 Input Format
 
 The natural language parser accepts flexible input:
@@ -114,13 +168,15 @@ The natural language parser accepts flexible input:
 - `Coffee CC 150` - Coffee paid by Credit Card, Rs.150
 - `Lunch Cash 500` - Lunch paid by Cash, Rs.500
 - `Uber D 350` - Uber paid by Debit Card, Rs.350
+- `Groceries CC 1200+850` - Amounts with simple math
 
 **Default payment modes:**
-| Shorthand | Full Name |
-|-----------|-----------|
-| C | Cash |
-| CC | Credit Card |
-| D | Debit |
+
+| Shorthand | Full Name   |
+| --------- | ----------- |
+| C         | Cash        |
+| CC        | Credit Card |
+| D         | Debit       |
 
 You can add custom payment modes in Settings.
 
@@ -131,14 +187,20 @@ You can add custom payment modes in Settings.
 - **Mobile-first**: Designed for on-the-go use
 - **Instant feedback**: Every action shows immediate visual response
 
-## ⌨️ Keyboard Shortcuts (Desktop)
+## 🔒 Privacy & Data
 
-- `Enter` - Submit transaction
-- `Escape` - Close dialogs / clear input
+**Local-first.** Transactions, goals, recurring rules, settings, and dashboard layout live in your browser’s `localStorage`. The app works fully offline.
 
-## 🔒 Privacy
+**Optional cloud backup.** If you turn on Google Sheets sync, only **transactions** are sent to Google — and only when you connect a sheet and sync (manually or via auto-sync). Goal links (`goalId`) are not included in the sheet export.
 
-All data is stored locally in your browser's localStorage. Nothing is sent to any server.
+| Data              | Stored locally | Google Sheets |
+| ----------------- | -------------- | ------------- |
+| Transactions      | ✅             | ✅ (optional) |
+| Goals             | ✅             | ❌            |
+| Recurring rules   | ✅             | ❌            |
+| Settings & layout | ✅             | ❌            |
+
+Nothing else is sent to a Bujit server — there isn’t one.
 
 ## 📊 Need/Want Categorization
 
