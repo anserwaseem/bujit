@@ -132,7 +132,8 @@ export async function decodeVault(
   }
   let json: string;
   try {
-    json = inflate(bytes, { to: "string" });
+    const decoded = inflate(bytes);
+    json = new TextDecoder().decode(decoded);
   } catch (e) {
     throw new Error("Failed to decompress vault: " + (e as Error).message);
   }
