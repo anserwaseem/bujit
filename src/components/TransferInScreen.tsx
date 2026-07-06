@@ -39,10 +39,7 @@ export function TransferInScreen({ onImported, onClose }: TransferInScreenProps)
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => stopCamera();
   }, []);
 
   const stopCamera = () => {
