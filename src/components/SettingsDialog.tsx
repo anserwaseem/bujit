@@ -629,6 +629,42 @@ export function SettingsDialog({
                   </p>
                 </div>
               </div>
+
+              {/* Device-to-device transfer */}
+              {(onOpenTransferOut || onOpenTransferIn) && (
+                <div className="border-t border-border pt-4">
+                  <h3 className="text-sm font-medium mb-1">
+                    Transfer to another device
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Move everything (transactions, goals, recurring, settings)
+                    between devices via QR — fully offline, no accounts, no
+                    cloud.
+                  </p>
+                  <div className="space-y-2">
+                    {onOpenTransferOut && (
+                      <button
+                        onClick={onOpenTransferOut}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium
+                                   bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                      >
+                        <QrCode className="w-4 h-4" />
+                        Send from this device
+                      </button>
+                    )}
+                    {onOpenTransferIn && (
+                      <button
+                        onClick={onOpenTransferIn}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium
+                                   bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                      >
+                        <ScanLine className="w-4 h-4" />
+                        Receive on this device
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
