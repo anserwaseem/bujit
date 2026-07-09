@@ -42,6 +42,32 @@ export function TransferInScreen({ onImported, onClose }: TransferInScreenProps)
     return () => stopCamera();
   }, []);
 
+  // Attach the stream to the <video> element AFTER it mounts (phase === "scanning").
+  // Doing this before setPhase leaves videoRef.current === null and the video stays black.
+  useEffect(() => {
+    if (phase !== "scanning") return;
+    const video = videoRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream) return;
+    if (video.srcObject !== stream) {
+      video.srcObject = stream;
+    }
+    const p = video.play();
+    if (p && typeof p.catch === "function") {
+      p.catch((err) => {
+        setError("Could not start video preview: " + (err as Error).message);
+      });
+    }
+    scanLoop();
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   const stopCamera = () => {
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
@@ -66,12 +92,9 @@ export function TransferInScreen({ onImported, onClose }: TransferInScreenProps)
         audio: false,
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
+      // The <video> element only exists once phase === "scanning".
+      // The effect above will attach srcObject + start the scan loop after it mounts.
       setPhase("scanning");
-      scanLoop();
     } catch (e) {
       setError(
         "Camera unavailable: " +
