@@ -19,6 +19,8 @@ import { FilterButton, FilterContent } from "@/components/FilterPanel";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { EditTransactionDialog } from "@/components/EditTransactionDialog";
 import { GoalsScreen } from "@/components/GoalsScreen";
+import { TransferOutScreen } from "@/components/TransferOutScreen";
+import { TransferInScreen } from "@/components/TransferInScreen";
 import {
   FilteredTransactionsDialog,
   type AdditionalFilterCriteria,
@@ -76,6 +78,8 @@ const IndexContent = () => {
   >(null);
   const [filteredDialogOpen, setFilteredDialogOpen] = useState(false);
   const [showGoals, setShowGoals] = useState(false);
+  const [showTransferOut, setShowTransferOut] = useState(false);
+  const [showTransferIn, setShowTransferIn] = useState(false);
   const [additionalFilter, setAdditionalFilter] =
     useState<AdditionalFilterCriteria | null>(null);
   const [dialogTitle, setDialogTitle] = useState<string>("");
@@ -296,6 +300,14 @@ const IndexContent = () => {
           recurring={recurring}
           paymentModesList={paymentModes}
           goals={goals}
+          onOpenTransferOut={() => {
+            setShowSettings(false);
+            setShowTransferOut(true);
+          }}
+          onOpenTransferIn={() => {
+            setShowSettings(false);
+            setShowTransferIn(true);
+          }}
         />
       )}
 
@@ -321,6 +333,20 @@ const IndexContent = () => {
           onDeleteGoal={deleteGoal}
           onArchiveGoal={archiveGoal}
           onClose={() => setShowGoals(false)}
+        />
+      )}
+
+      {showTransferOut && (
+        <TransferOutScreen onClose={() => setShowTransferOut(false)} />
+      )}
+
+      {showTransferIn && (
+        <TransferInScreen
+          onClose={() => setShowTransferIn(false)}
+          onImported={() => {
+            // Data is now in localStorage; reload so all hooks pick it up.
+            window.location.reload();
+          }}
         />
       )}
 

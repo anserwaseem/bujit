@@ -1,167 +1,145 @@
-Bujit Coach Pack — 6 Features
 
-Six features, grouped by complexity. Each is independently shippable; recommended order is bottom-up.
+# Device-to-Device Transfer via QR — No Server, No Cloud
 
----
+## Short Answer
 
-## A. Quick wins (Low complexity)
+**Yes, it's possible, and it's the right shape for Bujit's ethos.** The only real constraint is data size: one QR code holds at most ~2.9 KB of binary. A real Bujit vault (transactions + goals + recurring + settings) will exceed that within a few months of use. The solution is **animated QR** — the source device cycles through a sequence of QR frames, the destination device's camera reads them until it has all the pieces.
 
-### 1. #3 — Inline math: percent & tip shorthand
+This is a well-trodden pattern (Bitcoin hardware wallets, Signal contact transfer, `txqr`, `qrloop`) and works fully offline, screen-to-camera. No network, no relay, no accounts.
 
-Extend `src/lib/mathEval.ts` to preprocess two new patterns before evaluation:
+## What This Feature Is (and Isn't)
 
-- `N+P%` → `N + (N*P/100)`  e.g. `2400+10%` → 2640
-- `N-P%` → `N - (N*P/100)`  e.g. `850-15%` → 722.50
-- Division already works (`2400/3`)
+**Is:** A one-shot **migration / handoff** tool. Move your data from Phone A to Phone B (new phone, spouse's phone, laptop-in-browser).
 
-No changes to parser or input UI. Live preview already shows the resolved amount via `formatEvaluatedAmount`. Add tests to `src/lib/__tests__/mathEval.test.ts`.
+**Is not:** Continuous multi-device sync. If both devices keep editing after transfer, they diverge — that's the tradeoff for zero infrastructure. We'll handle this with clear UX: the receiving device can **merge** or **replace**, and we'll surface an obvious warning when both devices have been edited since the last transfer.
 
-### 2. #5 — Smart anomaly alerts
+For 90% of the pain (new phone, backup restore, one-time share with spouse), this is enough. For continuous two-way sync, that would be a separate future decision.
 
-New `src/lib/anomaly.ts`:
+## User Flow
 
-```ts
-detectAnomaly(newTx, history) → { isAnomalous, mean, factor } | null
-```
+**Source device (has data):**
+1. Settings → "Transfer to another device"
+2. Screen shows: total items, estimated transfer time, and a big animated QR code cycling frames (~5-10 fps)
+3. Progress indicator: "Frame 3 of 24 — keep camera pointed"
 
-Logic:
+**Destination device (empty or existing):**
+1. Settings → "Receive from another device" → camera opens
+2. Point at source screen. As frames are captured, a progress ring fills ("18 of 24 unique frames")
+3. Once all frames captured + checksum verified, show a preview: "Received 847 transactions, 12 goals, 3 recurring rules. What do you want to do?"
+   - **Replace everything on this device** (default for empty device)
+   - **Merge with existing data** (default when device has data — dedupes by transaction ID)
+   - **Cancel**
+4. Confirm → data lands in localStorage, done.
 
-- Filter last 90 days by `reason (normalized) + paymentMode`
-- Require sample size ≥ 5 (else skip — no false alarms for new categories)
-- Compute mean μ, stddev σ
-- Anomaly if `amount > μ + 2σ` (top ~2.5%)
+**If the receiver already has data**, we also show a subtle post-merge summary ("214 new, 12 already existed, 0 conflicts").
 
-UI: small inline banner inside `TransactionInput`'s live preview, above the necessity pills:
+## Why This Works Technically
 
-> ⚠ 3× your usual **Grocery** on **CC** (avg Rs. 3,200). Submit anyway?
+### Data size reality check
 
-Non-blocking, dismissable. Banner shows only when `parsed.isValid`.
+A Bujit transaction serialized as compact JSON is roughly 80–120 bytes. Compressed with gzip/deflate, closer to 30–50 bytes amortized. Rough capacity:
 
-### 3. #12 — Calendar heatmap
+| Dataset | Raw | Compressed | QR frames (2 KB each) |
+|---|---|---|---|
+| 100 transactions + goals | ~12 KB | ~4 KB | 2 frames |
+| 1000 transactions | ~110 KB | ~35 KB | 18 frames |
+| 5000 transactions (heavy user, several years) | ~550 KB | ~170 KB | 85 frames |
 
-New dashboard card `spending-heatmap` (fullWidth). GitHub-style year grid:
+At 8 fps with a fountain-code scheme (see below), even 85 frames transfers in **~15–25 seconds** of holding the phones together. Acceptable.
 
-- 53 weeks × 7 days, colored by daily expense total
-- 5 intensity buckets using `hsl(var(--expense))` with alpha
-- Tap a cell → opens `FilteredTransactionsDialog` for that day
-- Toggle "Year / Last 3 months" inside the card
+### Frame protocol: fountain codes, not sequential
 
-Add to `src/components/dashboard/registry/buildDashboardCards.tsx` and storage defaults. Pure SVG, no new dep.
+Naive approach: frame 1, frame 2, ..., frame N in a loop. Problem: if the camera misses frame 7, receiver has to wait a full cycle for it to come back around. Slow and frustrating.
 
----
+Better approach: **fountain / LT codes** (Luby Transform). Each QR frame is a random XOR combination of source chunks. The receiver only needs slightly more than N frames total, regardless of which specific ones it captured. This is exactly what `txqr` and Bitcoin's animated QR standards (BCUR / UR) do. Every frame the receiver sees adds information; nothing is wasted.
 
-## B. Medium features
+Practical impact: you don't have to hold the phones perfectly still or wait for a specific frame — as long as camera keeps seeing new frames, you converge.
 
-### 4. #2 — Recurring transactions
+### Encoding
 
-New file: `src/lib/recurring.ts` + storage key `bujit_recurring`.
+- Vault JSON → gzip → binary → fountain-encode → each chunk becomes a QR frame with a small header `{ vaultId, totalChunks, chunkSeed, checksum }`
+- Final assembled blob validated by SHA-256 checksum before being written to localStorage
+- All in-browser: `pako` for gzip, a small fountain-code lib, `qrcode` for encoding, `jsQR` or `@zxing/browser` for decoding, plus native `BarcodeDetector` where available (faster on Android)
 
-Data:
+### Camera access
 
-```ts
-interface RecurringRule {
-  id: string;
-  template: Omit<Transaction, "id" | "date">;
-  cadence: "daily" | "weekly" | "monthly" | "yearly";
-  dayOfMonth?: number;   // for monthly
-  startDate: string;
-  lastFiredDate?: string;
-  active: boolean;
-  goalId?: string;       // optional link
-}
-```
+Modern mobile browsers support `getUserMedia` in PWAs. iOS Safari and Android Chrome both work. On iOS, the app must be added to the home screen to get reliable camera permissions — Bujit is already a PWA so this is fine.
 
-Engine: on app load + on every new transaction, run `processDueRecurring()` which fires any rules where `nextDue ≤ today`, creating real transactions and updating `lastFiredDate`. Idempotent via `lastFiredDate`.
+## Security & Privacy Considerations
 
-UI:
+Even though it's local, the data is briefly "visible" on-screen as QR codes:
 
-- Manage recurring rules inside `SettingsDialog` (new "Recurring" section): list + add/edit/pause/delete
-- Long-press a transaction card → "Make recurring…" quick action (prefills the template)
+- **Shoulder-surfing:** the QR frames are theoretically photographable by a third camera. Mitigation: brief on-screen warning ("This QR contains your financial data. Only show it to a device you own."). Optional passphrase encryption on the source device (user types a passphrase, receiver types the same passphrase) as a paranoid mode. Default off since it adds friction; on-by-default only if user has enabled "privacy mode" already.
+- **Bystander screenshots:** the animated frames cycle fast enough that a single photo captures only a fraction. Not perfect, but a meaningful friction.
+- **No key material to protect:** unlike the earlier E2E-encrypted-relay proposal, there's no persistent shared secret. Nothing to leak later.
 
-Auto-detection (optional, Phase 2): scan history for monthly patterns (same reason+mode+~amount, ~30-day gap, 3+ occurrences) and surface a toast "Looks like Rent CC repeats monthly — set as recurring?"
+## What We're Explicitly Not Building
 
-### 5. #8 + #13 — Unified Goals (loans + sinking funds)
+- ❌ Any server, edge function, or Lovable Cloud table
+- ❌ WebRTC / Bluetooth / WebUSB — even though peer-to-peer, WebRTC needs a signaling server (violates spirit)
+- ❌ Google Sheets or Drive sync as the transfer channel
+- ❌ Continuous background sync between devices
+- ❌ Account creation, pairing phrases, recovery codes
 
-This single feature covers both pain points by treating every long-running money pot the same way.
+## Implementation Plan
 
-**Data** — new storage key `bujit_goals`:
+Broken into small, shippable steps. Each is roughly one focused session.
 
-```ts
-type GoalKind = "savings" | "owe" | "owed";
+### Step 1 — Vault serialization + integrity
+- `src/lib/vault.ts`: `exportVault()` gathers all `bujit_*` localStorage keys → compact JSON → gzip via `pako` → returns `Uint8Array` + SHA-256 checksum
+- `importVault(bytes, mode: 'replace' | 'merge')`: validates checksum, ungzips, parses, and writes back to storage
+- Merge logic: dedupe by transaction `id`, goal `id`, recurring rule `id`; last-write-wins for edits by `updatedAt` if present, else source wins for new items
+- Unit tests: round-trip export/import, merge dedupe, corrupted checksum rejection
 
-interface Goal {
-  id: string;
-  name: string;          // "Zakat 2026", "Ali — borrowed", "iPhone 16"
-  kind: GoalKind;
-  target?: number;       // required for owe/owed; optional for savings
-  counterparty?: string; // for owe/owed
-  dueDate?: string;
-  createdAt: string;
-  archived?: boolean;
-}
-```
+### Step 2 — Fountain-code framing + QR generation
+- `src/lib/qrTransfer.ts`: chunker that splits gzipped vault into ~1.5 KB pieces, fountain-encodes into frames using an LT-code scheme (small hand-rolled, or `luby-transform` npm), wraps each in a header envelope
+- Frame envelope: `{ v: 1, id: vaultId, n: totalChunks, seed, data: base64 }`
+- Encoder produces an infinite iterator of QR-friendly strings
 
-**Linking** — add optional `goalId?: string` to `Transaction`. Backward compatible.
+### Step 3 — Source screen: "Transfer to another device"
+- New route/modal `src/components/TransferOutScreen.tsx`
+- Renders animated QR at ~8 fps via `qrcode` lib into a canvas
+- Shows: vault stats (X transactions, Y goals), progress hint, warning banner
+- Pauses when tab hidden (battery)
 
-**Progress computation** (per goal, derived — no balance stored):
+### Step 4 — Destination screen: "Receive from another device"
+- `src/components/TransferInScreen.tsx`
+- Camera preview via `getUserMedia` with rear-camera preference on mobile
+- Frame decoding using `BarcodeDetector` where supported, `jsQR` fallback
+- Fountain decoder accumulates chunks until vault is reconstructable
+- Progress ring showing unique-frames-received / needed
+- On completion: preview + Replace/Merge/Cancel dialog
 
+### Step 5 — Settings integration + polish
+- Add both entry points to Settings under a new "Transfer data" section
+- Post-transfer toast summary
+- Handle "camera denied" and "no camera" fallbacks (offer paste-from-file as an emergency escape, using the same exported blob written to a `.bujit` file — reuses vault serialization)
+- Written test coverage on `vault.ts` and `qrTransfer.ts` (framing round-trip, fountain decode with dropped frames)
 
-| Kind    | Progress formula                                              |
-| ------- | ------------------------------------------------------------- |
-| savings | sum of all linked tx amounts (income adds, expense subtracts) |
-| owe     | target − sum(linked expense amounts paid back)                |
-| owed    | target − sum(linked income amounts received)                  |
+### Step 6 — Optional: passphrase mode
+- If time allows: checkbox on source ("Encrypt with passphrase"), receiver prompted for same passphrase before merge preview
+- AES-GCM with PBKDF2-derived key, no crypto surface outside browser SubtleCrypto
 
+## Dependencies to Add
 
-This matches the user's existing journaling style (Path A): salary as income, investments as expenses, borrowing-back as income — all just tagged transactions.
+Small, well-maintained:
+- `pako` (gzip in browser, ~45 KB)
+- `qrcode` (QR encoding, ~50 KB)
+- `jsQR` **or** `@zxing/browser` (QR decoding fallback for browsers without `BarcodeDetector`)
+- No new services, no backend, no accounts
 
-**UI — Dashboard card + dedicated screen** (per user choice):
+## Risks & Honest Caveats
 
-```text
-┌─ Goals ──────────────────── [→] ┐
-│  ◐ Zakat 2026     Rs. 18k / 60k │
-│  ◐ Ali (owe)      Rs. 30k / 50k │
-│  ◐ iPhone 16      Rs. 80k / 200k│
-└──────────────────────────────────┘
-```
+1. **iOS camera in PWA** can be finicky. We should test on a real iPhone before shipping. Fallback: "paste-from-file" mode using the same exported blob saved as `.bujit` and shared via iOS share sheet — no camera needed.
+2. **Very large vaults** (>200 KB compressed, i.e. tens of thousands of transactions) will take a minute+. We'll warn users and offer the `.bujit` file fallback for those cases.
+3. **Merge semantics on edits.** Editing the same transaction on both devices between transfers is an edge case. Current plan: last-write-wins by `updatedAt`. We may want to surface a "N conflicts resolved" line in the post-merge summary later.
+4. **This does not solve continuous multi-device use.** If you want to log on phone AND laptop daily, you'll still be re-transferring periodically. That's the honest tradeoff of zero infrastructure. Most users transfer once (new phone) and never again.
 
-Tap card header → full-screen Goals view with three filter chips (All / Savings / Owe / Owed), per-goal progress ring, linked transactions timeline, edit/archive.
+## What Success Looks Like
 
-**Tagging a transaction**:
+- New-phone migration takes under a minute, works fully airplane-mode on both devices
+- No new backend, no accounts, no keys to remember
+- Merge mode makes household sharing viable (spouse's initial import from your phone)
+- The `.bujit` file fallback covers edge cases (camera issues, huge vaults, sharing over email/AirDrop for the paranoid)
 
-- New "🎯 Tag goal" chip in `TransactionInput`'s live preview (only when ≥1 active goal exists)
-- Tapping opens a small dropdown of active goals
-- Same chip in `EditTransactionDialog` for retroactive tagging
-
-**Smart inference** — when a tagged goal is selected, auto-suggest a sensible `type`:
-
-- `owe` goal → expense
-- `owed` goal → income
-- `savings` goal → keeps user's current pick
-
-Zero changes to existing transactions or `TransactionType`. Old data renders as untagged.
-
----
-
-## Order of work (recommended)
-
-1. Inline math % (Low)
-2. Anomaly alerts (Low)
-3. Calendar heatmap (Low)
-4. Goals data layer + dashboard card + tagging chip (Medium)
-5. Goals dedicated screen + per-goal timeline (Medium)
-6. Recurring engine + Settings UI (Medium)
-
-Each step ends with tests and is independently shippable.
-
----
-
-## Technical notes
-
-- **Storage**: all new state in `localStorage` (`bujit_goals`, `bujit_recurring`), mirroring the existing pattern in `src/lib/storage.ts` with validation + corruption recovery.
-- **Migration**: none required — all new fields are optional.
-- **Hooks**: new `useGoals.ts`, `useRecurring.ts`, `useAnomaly.ts` siblings to `useBujit.ts`.
-- **Auto-sync**: tagged transactions sync to Google Sheets via existing pipeline; goals themselves stay local (no sheet columns needed).
-- **Dashboard registry**: heatmap + goals cards added to `DEFAULT_DASHBOARD_CARDS` in `storage.ts` and `buildDashboardCards.tsx`; existing layout merge logic picks them up automatically for existing users.
-- **Tests**: extend `mathEval.test.ts`; new test files for `anomaly`, `recurring`, `goals` (storage + progress math).
-- **Path A philosophy**: documented in a short comment block on the `Goal` type so future contributors understand why we don't introduce a "transfer" transaction type.
+Ready to build once you approve.
