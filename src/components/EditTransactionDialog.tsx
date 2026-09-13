@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { X, CalendarIcon, Minus, Plus, Check, AlertCircle } from "lucide-react";
+import { X, CalendarIcon, Minus, Plus, Check, AlertCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Transaction, NecessityType, PaymentMode, Goal } from "@/lib/types";
 import { GoalChip } from "@/components/GoalChip";
@@ -15,6 +15,11 @@ import {
   hasOperators,
   formatEvaluatedAmount,
 } from "@/lib/mathEval";
+import {
+  combineDateAndTime,
+  setTimeOnDate,
+  toTimeInputValue,
+} from "@/lib/dateTime";
 
 interface EditTransactionDialogProps {
   transaction: Transaction;
@@ -119,32 +124,50 @@ export function EditTransactionDialog({
           {/* Date Selector */}
           <div>
             <label className="text-sm text-muted-foreground mb-1.5 block">
-              Date
+              Date & time
             </label>
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-input border border-border text-sm font-medium text-foreground hover:bg-muted/50 transition-colors text-left">
-                  <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-                  {isToday
-                    ? "Today"
-                    : format(selectedDate, "EEEE, MMM d, yyyy")}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 z-[70]" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      setCalendarOpen(false);
-                    }
-                  }}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
+            <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] gap-2">
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <button className="min-w-0 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-input border border-border text-sm font-medium text-foreground hover:bg-muted/50 transition-colors text-left">
+                    <CalendarIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate">
+                      {isToday ? "Today" : format(selectedDate, "MMM d, yyyy")}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="z-[70] w-auto overflow-hidden border-border bg-card p-0 shadow-xl"
+                  align="start"
+                  sideOffset={8}
+                >
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setSelectedDate(combineDateAndTime(date, selectedDate));
+                        setCalendarOpen(false);
+                      }
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <div className="relative">
+                <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  aria-label="Transaction time"
+                  type="time"
+                  value={toTimeInputValue(selectedDate)}
+                  onChange={(event) =>
+                    setSelectedDate(setTimeOnDate(selectedDate, event.target.value))
+                  }
+                  className="w-full rounded-lg border border-border bg-input py-2.5 pl-9 pr-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
-              </PopoverContent>
-            </Popover>
+              </div>
+            </div>
           </div>
 
           {/* Reason */}

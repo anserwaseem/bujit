@@ -7,6 +7,7 @@ import { SwipeableCard } from "./SwipeableCard";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { maskReason, formatMaskedAmount } from "@/lib/privacy";
+import { formatTransactionTime } from "@/lib/dateTime";
 
 interface TransactionCardProps {
   transaction: Transaction;
@@ -123,6 +124,10 @@ export function TransactionCard({
           </p>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span>{transaction.paymentMode}</span>
+            <span>•</span>
+            <time dateTime={transaction.date}>
+              {formatTransactionTime(transaction.date)}
+            </time>
             {showDate && (
               <>
                 <span>•</span>
