@@ -8,6 +8,7 @@ const CSV_HEADERS = [
   "paymentMode",
   "type",
   "necessity",
+  "time",
 ];
 
 export interface CSVParseResult {
@@ -21,9 +22,9 @@ export function generateCSVTemplate(): string {
   // Use current year for example dates
   const currentYear = new Date().getFullYear();
   const exampleRows = [
-    `10/01/${currentYear},Groceries,2500,Cash,expense,need`,
-    `11/01/${currentYear},Coffee,350,JC,expense,want`,
-    `09/01/${currentYear},Salary,50000,Bank,income,`,
+    `10/01/${currentYear},Groceries,2500,Cash,expense,need,09:30`,
+    `11/01/${currentYear},Coffee,350,JC,expense,want,15:45`,
+    `09/01/${currentYear},Salary,50000,Bank,income,,08:00`,
   ];
   return [headers, ...exampleRows].join("\n");
 }
@@ -37,6 +38,8 @@ export function exportTransactionsToCSV(transactions: Transaction[]): string {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     const formattedDate = `${day}/${month}/${year}`;
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
 
     return [
       formattedDate,
@@ -45,6 +48,7 @@ export function exportTransactionsToCSV(transactions: Transaction[]): string {
       t.paymentMode,
       t.type,
       t.necessity || "",
+      `${hours}:${minutes}`,
     ].join(",");
   });
   return [headers, ...rows].join("\n");
@@ -58,6 +62,10 @@ export function parseCSVToTransactions(
   const errors: string[] = [];
   const transactions: Omit<Transaction, "id">[] = [];
   const newPaymentModes: PaymentMode[] = [];
+  const headers = parseCSVLine(lines[0] ?? "").map((header) =>
+    header.trim().toLowerCase()
+  );
+  const timeColumnIndex = headers.indexOf("time");
 
   // Create a map of existing modes (by name and shorthand, case-insensitive)
   const modeMap = new Map<string, PaymentMode>();
@@ -85,6 +93,7 @@ export function parseCSVToTransactions(
       }
 
       const [date, reason, amountStr, paymentModeStr, type, necessity] = values;
+      const time = timeColumnIndex >= 0 ? (values[timeColumnIndex] ?? "").trim() : "";
 
       // Validate date - ONLY DD/MM/YYYY format
       const ddmmyyyyMatch = date
@@ -118,6 +127,17 @@ export function parseCSVToTransactions(
       if (isNaN(dateObj.getTime()) || dateObj.getDate() !== day) {
         errors.push(`Row ${i + 1}: Invalid date "${date}"`);
         continue;
+      }
+
+      if (time) {
+        const timeMatch = time.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+        if (!timeMatch) {
+          errors.push(
+            `Row ${i + 1}: Invalid time format "${time}". Use HH:mm (e.g., 09:30)`
+          );
+          continue;
+        }
+        dateObj.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
       }
 
       // Validate reason - must be non-empty

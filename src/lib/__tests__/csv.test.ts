@@ -32,7 +32,7 @@ describe("csv", () => {
       const template = generateCSVTemplate();
       const lines = template.split("\n");
 
-      expect(lines[0]).toBe("date,reason,amount,paymentMode,type,necessity");
+      expect(lines[0]).toBe("date,reason,amount,paymentMode,type,necessity,time");
     });
 
     it("should include example rows with current year", () => {
@@ -55,7 +55,7 @@ describe("csv", () => {
       // check that example rows have correct number of columns
       for (let i = 1; i < lines.length; i++) {
         const columns = lines[i].split(",");
-        expect(columns.length).toBe(6);
+        expect(columns.length).toBe(7);
       }
     });
 
@@ -73,7 +73,7 @@ describe("csv", () => {
       const csv = exportTransactionsToCSV([]);
       const lines = csv.split("\n");
 
-      expect(lines[0]).toBe("date,reason,amount,paymentMode,type,necessity");
+      expect(lines[0]).toBe("date,reason,amount,paymentMode,type,necessity,time");
       expect(lines.length).toBe(1);
     });
 
@@ -93,7 +93,7 @@ describe("csv", () => {
       const csv = exportTransactionsToCSV(transactions);
       const lines = csv.split("\n");
 
-      expect(lines[0]).toBe("date,reason,amount,paymentMode,type,necessity");
+      expect(lines[0]).toBe("date,reason,amount,paymentMode,type,necessity,time");
       expect(lines[1]).toContain("15/06/2024");
       expect(lines[1]).toContain('"coffee"');
       expect(lines[1]).toContain("100");
@@ -252,6 +252,18 @@ describe("csv", () => {
         expect(result.transactions[0].paymentMode).toBe("Cash");
         expect(result.transactions[0].type).toBe("expense");
         expect(result.transactions[0].necessity).toBe("need");
+      });
+
+      it("should preserve an optional time column", () => {
+        const csv = `date,reason,amount,paymentMode,type,necessity,time
+15/06/2024,coffee,100,Cash,expense,need,14:35`;
+
+        const result = parseCSVToTransactions(csv, existingModes);
+
+        expect(result.errors).toHaveLength(0);
+        const parsedDate = new Date(result.transactions[0].date);
+        expect(parsedDate.getHours()).toBe(14);
+        expect(parsedDate.getMinutes()).toBe(35);
       });
 
       it("should parse valid CSV with income transaction", () => {
@@ -674,6 +686,9 @@ describe("csv", () => {
         expect(result.transactions[0].amount).toBe(100);
         expect(result.transactions[1].reason).toBe("lunch");
         expect(result.transactions[1].amount).toBe(200.5);
+        expect(new Date(result.transactions[0].date).getHours()).toBe(
+          new Date(originalTransactions[0].date).getHours()
+        );
       });
 
       it("should handle quoted reasons in round-trip", () => {
