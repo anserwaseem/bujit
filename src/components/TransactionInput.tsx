@@ -8,7 +8,7 @@ import {
   MicOff,
   Sparkles,
 } from "lucide-react";
-import { format, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import { parseInput } from "@/lib/parser";
 import { PaymentMode, Transaction, NecessityType, Goal } from "@/lib/types";
 import { GoalChip } from "@/components/GoalChip";
@@ -26,6 +26,12 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useAutoComplete } from "@/hooks/useAutoComplete";
 import { useLearnedNecessity } from "@/hooks/useLearnedNecessity";
 import { toast } from "@/hooks/use-toast";
+import {
+  combineDateAndTime,
+  formatCompactTransactionDateTime,
+  setTimeOnDate,
+  toTimeInputValue,
+} from "@/lib/dateTime";
 
 interface TransactionInputProps {
   paymentModes: PaymentMode[];
@@ -251,18 +257,6 @@ export function TransactionInput({
     }
   };
 
-  const isToday =
-    format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
-  const isYesterday =
-    format(selectedDate, "yyyy-MM-dd") ===
-    format(subDays(new Date(), 1), "yyyy-MM-dd");
-
-  const getDateLabel = () => {
-    if (isToday) return "Today";
-    if (isYesterday) return "Yesterday";
-    return format(selectedDate, "MMM d");
-  };
-
   return (
     <div className="space-y-4">
       {/* Quick Add Pills */}
@@ -294,7 +288,7 @@ export function TransactionInput({
               className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <CalendarIcon className="w-3.5 h-3.5" />
-              {getDateLabel()}
+              {formatCompactTransactionDateTime(selectedDate)}
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -302,14 +296,25 @@ export function TransactionInput({
               mode="single"
               selected={selectedDate}
               onSelect={(date) => {
-                if (date) {
-                  setSelectedDate(date);
-                  setCalendarOpen(false);
-                }
+                  if (date) setSelectedDate(combineDateAndTime(date, selectedDate));
               }}
               initialFocus
               className="p-3 pointer-events-auto"
             />
+            <div className="flex items-center justify-between gap-3 border-t border-border p-3">
+              <label htmlFor="new-transaction-time" className="text-sm text-muted-foreground">
+                Time
+              </label>
+              <input
+                id="new-transaction-time"
+                type="time"
+                value={toTimeInputValue(selectedDate)}
+                onChange={(event) =>
+                  setSelectedDate(setTimeOnDate(selectedDate, event.target.value))
+                }
+                className="min-h-10 rounded-md border border-border bg-input px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
           </PopoverContent>
         </Popover>
 

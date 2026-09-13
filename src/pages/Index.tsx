@@ -28,6 +28,7 @@ import {
 import { PaymentMode, Transaction } from "@/lib/types";
 import { BarChart3, List } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sortTransactionsNewest } from "@/lib/dateTime";
 
 const IndexContent = () => {
   const {
@@ -137,6 +138,9 @@ const IndexContent = () => {
       if (t.type === "expense") {
         groups[dateKey].dayTotal += t.amount;
       }
+    });
+    Object.values(groups).forEach((group) => {
+      group.transactions = sortTransactionsNewest(group.transactions);
     });
     return Object.entries(groups).sort(
       ([a], [b]) => new Date(b).getTime() - new Date(a).getTime()
