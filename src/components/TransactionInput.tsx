@@ -495,7 +495,7 @@ export function TransactionInput({
               {/* Show math preview when expression contains operators */}
               {parsed.amount &&
                 input.trim().split(/\s+/).pop() &&
-                hasOperators(input.trim().split(/\s+/).at(-1) ?? "") && (
+                hasOperators(input.trim().split(/\s+/).slice(-1)[0] ?? "") && (
                   <p className="text-xs text-muted-foreground mt-0.5">
                     = {formatEvaluatedAmount(parsed.amount, currencySymbol)}
                   </p>
