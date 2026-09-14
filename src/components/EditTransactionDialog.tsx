@@ -126,10 +126,10 @@ export function EditTransactionDialog({
             <label className="text-sm text-muted-foreground mb-1.5 block">
               Date & time
             </label>
-            <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] gap-2">
+            <div className="grid min-w-0 grid-cols-2 gap-2">
               <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <PopoverTrigger asChild>
-                  <button className="min-w-0 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-input border border-border text-sm font-medium text-foreground hover:bg-muted/50 transition-colors text-left">
+                  <button className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-input px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/50">
                     <CalendarIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
                     <span className="truncate">
                       {isToday ? "Today" : format(selectedDate, "MMM d, yyyy")}
@@ -155,7 +155,7 @@ export function EditTransactionDialog({
                   />
                 </PopoverContent>
               </Popover>
-              <div className="relative">
+              <div className="relative min-w-0 overflow-hidden rounded-lg">
                 <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   aria-label="Transaction time"
@@ -164,7 +164,7 @@ export function EditTransactionDialog({
                   onChange={(event) =>
                     setSelectedDate(setTimeOnDate(selectedDate, event.target.value))
                   }
-                  className="w-full rounded-lg border border-border bg-input py-2.5 pl-9 pr-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="block min-h-10 w-full min-w-0 appearance-none rounded-lg border border-border bg-input py-2.5 pl-9 pr-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
             </div>
