@@ -91,7 +91,7 @@ export function TransactionCard({
     <SwipeableCard onSwipeLeft={handleDelete} onSwipeRight={handleEdit}>
       <div
         onClick={handleCardClick}
-        className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 p-3 rounded-lg bg-card/50 hover:bg-card 
+        className="group flex items-center gap-3 p-3 rounded-lg bg-card/50 hover:bg-card 
                    border border-transparent hover:border-border transition-all animate-slide-up
                    cursor-pointer select-none"
       >
@@ -118,7 +118,7 @@ export function TransactionCard({
         )}
 
         {/* Content */}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="font-medium capitalize truncate text-foreground">
             {maskReason(transaction.reason, settings)}
           </p>
@@ -138,7 +138,7 @@ export function TransactionCard({
         </div>
 
         {/* Amount */}
-        <div className="row-span-1 text-right">
+        <div className="shrink-0 text-right">
           <p
             className={cn(
               "font-mono font-semibold",
