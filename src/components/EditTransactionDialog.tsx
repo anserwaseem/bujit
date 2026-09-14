@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { X, CalendarIcon, Minus, Plus, Check, AlertCircle, Clock } from "lucide-react";
+import { X, CalendarIcon, Minus, Plus, Check, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Transaction, NecessityType, PaymentMode, Goal } from "@/lib/types";
 import { GoalChip } from "@/components/GoalChip";
@@ -156,7 +156,6 @@ export function EditTransactionDialog({
                 </PopoverContent>
               </Popover>
               <div className="relative min-w-0 overflow-hidden rounded-lg">
-                <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   aria-label="Transaction time"
                   type="time"
@@ -164,7 +163,7 @@ export function EditTransactionDialog({
                   onChange={(event) =>
                     setSelectedDate(setTimeOnDate(selectedDate, event.target.value))
                   }
-                  className="block min-h-10 w-full min-w-0 appearance-none rounded-lg border border-border bg-input py-2.5 pl-9 pr-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="block min-h-10 w-full min-w-0 rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
             </div>
