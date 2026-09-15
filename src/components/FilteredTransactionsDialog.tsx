@@ -3,6 +3,7 @@ import { X, SearchX } from "lucide-react";
 import type { Transaction, NecessityType, AppSettings } from "@/lib/types";
 import { TransactionList } from "./TransactionList";
 import { startOfDay, endOfDay } from "date-fns";
+import { sortTransactionsNewest } from "@/lib/dateTime";
 
 export interface AdditionalFilterCriteria {
   type?: "expense" | "income";
@@ -114,6 +115,9 @@ export function FilteredTransactionsDialog({
       if (t.type === "expense") {
         groups[dateKey].dayTotal += t.amount;
       }
+    });
+    Object.values(groups).forEach((group) => {
+      group.transactions = sortTransactionsNewest(group.transactions);
     });
     return Object.entries(groups).sort(
       ([a], [b]) => new Date(b).getTime() - new Date(a).getTime()

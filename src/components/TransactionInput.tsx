@@ -8,7 +8,7 @@ import {
   MicOff,
   Sparkles,
 } from "lucide-react";
-import { format, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import { parseInput } from "@/lib/parser";
 import { PaymentMode, Transaction, NecessityType, Goal } from "@/lib/types";
 import { GoalChip } from "@/components/GoalChip";
@@ -26,6 +26,12 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useAutoComplete } from "@/hooks/useAutoComplete";
 import { useLearnedNecessity } from "@/hooks/useLearnedNecessity";
 import { toast } from "@/hooks/use-toast";
+import {
+  combineDateAndTime,
+  formatCompactTransactionDateTime,
+  setTimeOnDate,
+  toTimeInputValue,
+} from "@/lib/dateTime";
 
 interface TransactionInputProps {
   paymentModes: PaymentMode[];
@@ -251,20 +257,8 @@ export function TransactionInput({
     }
   };
 
-  const isToday =
-    format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
-  const isYesterday =
-    format(selectedDate, "yyyy-MM-dd") ===
-    format(subDays(new Date(), 1), "yyyy-MM-dd");
-
-  const getDateLabel = () => {
-    if (isToday) return "Today";
-    if (isYesterday) return "Yesterday";
-    return format(selectedDate, "MMM d");
-  };
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Quick Add Pills */}
       {quickAddSuggestions.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
@@ -284,43 +278,57 @@ export function TransactionInput({
       )}
 
       {/* Date Selector & Type Toggle Row */}
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
             <button
               ref={dateSwipeRef}
               onTouchStart={handleDateTouchStart}
               onTouchEnd={handleDateTouchEnd}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Choose transaction date and time"
+              className="flex min-w-0 items-center gap-1.5 rounded-lg bg-muted px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              <CalendarIcon className="w-3.5 h-3.5" />
-              {getDateLabel()}
+              <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{formatCompactTransactionDateTime(selectedDate)}</span>
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent
+            className="w-auto overflow-hidden border-border bg-card p-0 shadow-xl"
+            align="start"
+            sideOffset={8}
+          >
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={(date) => {
-                if (date) {
-                  setSelectedDate(date);
-                  setCalendarOpen(false);
-                }
+                  if (date) setSelectedDate(combineDateAndTime(date, selectedDate));
               }}
               initialFocus
               className="p-3 pointer-events-auto"
             />
+            <div className="flex items-center justify-between gap-3 border-t border-border p-3">
+              <label htmlFor="new-transaction-time" className="text-sm text-muted-foreground">
+                Time
+              </label>
+              <input
+                id="new-transaction-time"
+                type="time"
+                value={toTimeInputValue(selectedDate)}
+                onChange={(event) =>
+                  setSelectedDate(setTimeOnDate(selectedDate, event.target.value))
+                }
+                className="min-h-10 rounded-md border border-border bg-input px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
           </PopoverContent>
         </Popover>
 
-        <span className="text-xs text-muted-foreground">swipe →</span>
-
         {/* Compact Type Toggle - pushed to right */}
-        <div className="flex rounded-full bg-muted p-0.5 ml-auto">
+        <div className="ml-auto flex shrink-0 rounded-lg bg-muted p-0.5">
           <button
             onClick={() => setIsIncome(false)}
             className={cn(
-              "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+              "flex h-8 items-center gap-1 rounded-md px-2.5 text-xs font-medium transition-all",
               !isIncome
                 ? "bg-expense/20 text-expense"
                 : "text-muted-foreground hover:text-foreground"
@@ -332,7 +340,7 @@ export function TransactionInput({
           <button
             onClick={() => setIsIncome(true)}
             className={cn(
-              "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+              "flex h-8 items-center gap-1 rounded-md px-2.5 text-xs font-medium transition-all",
               isIncome
                 ? "bg-income/20 text-income"
                 : "text-muted-foreground hover:text-foreground"
@@ -358,7 +366,7 @@ export function TransactionInput({
           onFocus={() => setShowAutoComplete(input.length >= 2)}
           onBlur={() => setTimeout(() => setShowAutoComplete(false), 200)}
           placeholder="Grocery CC 9500"
-          className="w-full bg-card border border-border rounded-xl px-4 py-3.5 text-lg font-mono 
+          className="w-full bg-card border border-border rounded-xl px-4 py-3.5 text-base font-mono 
                      placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 
                      focus:ring-primary/30 focus:border-primary transition-all pr-24"
         />
@@ -486,7 +494,7 @@ export function TransactionInput({
               {/* Show math preview when expression contains operators */}
               {parsed.amount &&
                 input.trim().split(/\s+/).pop() &&
-                hasOperators(input.trim().split(/\s+/).pop()!) && (
+                hasOperators(input.trim().split(/\s+/).slice(-1)[0] ?? "") && (
                   <p className="text-xs text-muted-foreground mt-0.5">
                     = {formatEvaluatedAmount(parsed.amount, currencySymbol)}
                   </p>
@@ -579,11 +587,8 @@ export function TransactionInput({
       )}
 
       {/* Helper Text - no border */}
-      <p className="text-xs text-muted-foreground text-center pt-0">
-        Type: <span className="font-mono text-foreground/70">reason</span>{" "}
-        <span className="font-mono text-foreground/70">mode</span>{" "}
-        <span className="font-mono text-foreground/70">amount</span>
-        {isSupported && <span className="ml-2">• or tap mic to speak</span>}
+      <p className="text-center text-xs text-muted-foreground">
+        reason · mode · amount
       </p>
     </div>
   );

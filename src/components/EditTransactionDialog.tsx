@@ -15,6 +15,11 @@ import {
   hasOperators,
   formatEvaluatedAmount,
 } from "@/lib/mathEval";
+import {
+  combineDateAndTime,
+  setTimeOnDate,
+  toTimeInputValue,
+} from "@/lib/dateTime";
 
 interface EditTransactionDialogProps {
   transaction: Transaction;
@@ -119,32 +124,49 @@ export function EditTransactionDialog({
           {/* Date Selector */}
           <div>
             <label className="text-sm text-muted-foreground mb-1.5 block">
-              Date
+              Date & time
             </label>
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-input border border-border text-sm font-medium text-foreground hover:bg-muted/50 transition-colors text-left">
-                  <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-                  {isToday
-                    ? "Today"
-                    : format(selectedDate, "EEEE, MMM d, yyyy")}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 z-[70]" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      setCalendarOpen(false);
-                    }
-                  }}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
+            <div className="grid min-w-0 grid-cols-2 gap-2">
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <button className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-input px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/50">
+                    <CalendarIcon className="w-4 h-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate">
+                      {isToday ? "Today" : format(selectedDate, "MMM d, yyyy")}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="z-[70] w-auto overflow-hidden border-border bg-card p-0 shadow-xl"
+                  align="start"
+                  sideOffset={8}
+                >
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setSelectedDate(combineDateAndTime(date, selectedDate));
+                        setCalendarOpen(false);
+                      }
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <div className="relative min-w-0 overflow-hidden rounded-lg">
+                <input
+                  aria-label="Transaction time"
+                  type="time"
+                  value={toTimeInputValue(selectedDate)}
+                  onChange={(event) =>
+                    setSelectedDate(setTimeOnDate(selectedDate, event.target.value))
+                  }
+                  className="block min-h-10 w-full min-w-0 rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
-              </PopoverContent>
-            </Popover>
+              </div>
+            </div>
           </div>
 
           {/* Reason */}

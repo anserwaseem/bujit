@@ -3,6 +3,7 @@ import {
   extractSheetId,
   validateSheetUrl,
   formatDate,
+  formatTime,
   prepareTransactionData,
   syncTransactionsToSheet,
 } from "../googleSheets";
@@ -37,6 +38,13 @@ describe("googleSheets", () => {
       const date2025 = "2025-06-15T12:00:00.000Z";
       expect(formatDate(date2023)).toBe("15/06/2023");
       expect(formatDate(date2025)).toBe("15/06/2025");
+    });
+  });
+
+  describe("formatTime", () => {
+    it("formats the transaction's local time as HH:mm", () => {
+      const date = new Date(2024, 0, 15, 9, 5).toISOString();
+      expect(formatTime(date)).toBe("09:05");
     });
   });
 
@@ -120,6 +128,7 @@ describe("googleSheets", () => {
         "paymentMode",
         "type",
         "necessity",
+        "time",
       ]);
       expect(result[1]).toEqual([
         "15/01/2024",
@@ -128,6 +137,7 @@ describe("googleSheets", () => {
         "Cash",
         "expense",
         "need",
+        formatTime(transactions[0].date),
       ]);
       expect(result[2]).toEqual([
         "16/01/2024",
@@ -136,6 +146,7 @@ describe("googleSheets", () => {
         "Debit Card",
         "expense",
         "want",
+        formatTime(transactions[1].date),
       ]);
     });
 
@@ -206,6 +217,7 @@ describe("googleSheets", () => {
         "paymentMode",
         "type",
         "necessity",
+        "time",
       ]);
     });
 

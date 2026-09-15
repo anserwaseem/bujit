@@ -7,6 +7,7 @@ import { SwipeableCard } from "./SwipeableCard";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { maskReason, formatMaskedAmount } from "@/lib/privacy";
+import { formatTransactionTime } from "@/lib/dateTime";
 
 interface TransactionCardProps {
   transaction: Transaction;
@@ -117,23 +118,27 @@ export function TransactionCard({
         )}
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="font-medium capitalize truncate text-foreground">
             {maskReason(transaction.reason, settings)}
           </p>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>{transaction.paymentMode}</span>
+          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-xs text-muted-foreground">
+            <span className="truncate">{transaction.paymentMode}</span>
+            <span>•</span>
             {showDate && (
               <>
+                <span className="shrink-0">{format(new Date(transaction.date), "d MMM")}</span>
                 <span>•</span>
-                <span>{format(new Date(transaction.date), "d MMM")}</span>
               </>
             )}
+            <time className="shrink-0" dateTime={transaction.date}>
+              {formatTransactionTime(transaction.date)}
+            </time>
           </div>
         </div>
 
         {/* Amount */}
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           <p
             className={cn(
               "font-mono font-semibold",
@@ -152,7 +157,7 @@ export function TransactionCard({
             e.stopPropagation();
             handleEdit();
           }}
-          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md text-muted-foreground 
+          className="hidden opacity-0 group-hover:opacity-100 p-1.5 rounded-md text-muted-foreground 
                      hover:text-primary hover:bg-primary/10 transition-all"
         >
           <Pencil className="w-4 h-4" />
@@ -164,7 +169,7 @@ export function TransactionCard({
             e.stopPropagation();
             handleDelete();
           }}
-          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md text-muted-foreground 
+          className="hidden opacity-0 group-hover:opacity-100 p-1.5 rounded-md text-muted-foreground 
                      hover:text-destructive hover:bg-destructive/10 transition-all"
         >
           <Trash2 className="w-4 h-4" />

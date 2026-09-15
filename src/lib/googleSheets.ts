@@ -294,6 +294,13 @@ export function formatDate(date: string): string {
   return `${day}/${month}/${year}`;
 }
 
+export function formatTime(date: string): string {
+  const d = new Date(date);
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
 // prepare transaction data for Google Sheets export
 // Returns array with headers as first row, then transaction rows
 export function prepareTransactionData(
@@ -306,6 +313,7 @@ export function prepareTransactionData(
     "paymentMode",
     "type",
     "necessity",
+    "time",
   ];
   const values = [
     headers,
@@ -316,6 +324,7 @@ export function prepareTransactionData(
       t.paymentMode,
       t.type,
       t.necessity || "",
+      formatTime(t.date),
     ]),
   ];
   return values;
@@ -339,8 +348,8 @@ export async function syncTransactionsToSheet(
   const values = prepareTransactionData(transactions);
 
   // clear existing data and write new data
-  // use range that covers all rows (A1:F covers 6 columns, rows will be determined by data length)
-  const range = `Transactions!A1:F${values.length}`;
+  // use range that covers all rows (A1:G covers 7 columns, rows are determined by data length)
+  const range = `Transactions!A1:G${values.length}`;
   const url = `${SHEETS_API_BASE}/${config.sheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
 
   const response = await makeAuthenticatedRequest(url, {
